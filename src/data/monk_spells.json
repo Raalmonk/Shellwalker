@@ -1,0 +1,207 @@
+[
+  {
+    "name": "Growl (desc=Basic Ability)",
+    "id": 2649,
+    "effects": [
+      {
+        "sp_coeff": 0.25
+      }
+    ],
+    "range": 30,
+    "cooldown": 8
+  },
+  {
+    "name": "Dash (desc=Basic Ability)",
+    "id": 61684,
+    "effects": [
+      {}
+    ],
+    "cooldown": 20
+  },
+  {
+    "name": "Tiger Palm",
+    "id": 100780,
+    "effects": [
+      {
+        "ap_coeff": 0.27027
+      }
+    ],
+    "power_cost": {
+      "energy": 50
+    },
+    "range": 5,
+    "gcd": 1.5
+  },
+  {
+    "name": "Blackout Kick",
+    "id": 100784,
+    "effects": [
+      {
+        "ap_coeff": 0.77
+      }
+    ],
+    "power_cost": {
+      "chi": 3
+    },
+    "range": 5,
+    "gcd": 1.5,
+    "cooldown": 3
+  },
+  {
+    "name": "Flying Serpent Kick",
+    "id": 101545,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 30
+  },
+  {
+    "name": "Spinning Crane Kick",
+    "id": 101546,
+    "effects": [
+      {}
+    ],
+    "power_cost": {
+      "chi": 2,
+      "energy": 40
+    },
+    "gcd": 1.5
+  },
+  {
+    "name": "Roll",
+    "id": 109132,
+    "effects": [
+      {}
+    ],
+    "cooldown": 0.8
+  },
+  {
+    "name": "Detox",
+    "id": 115450,
+    "effects": [
+      {}
+    ],
+    "range": 40,
+    "gcd": 1.5
+  },
+  {
+    "name": "Provoke",
+    "id": 115546,
+    "effects": [
+      {}
+    ],
+    "range": 30,
+    "cooldown": 8
+  },
+  {
+    "name": "Vivify",
+    "id": 116670,
+    "effects": [
+      {
+        "sp_coeff": 2.58
+      }
+    ],
+    "power_cost": {
+      "energy": 30
+    },
+    "range": 40,
+    "cast": 1.5,
+    "gcd": 1.5
+  },
+  {
+    "name": "Crackling Jade Lightning",
+    "id": 117952,
+    "effects": [
+      {
+        "ap_coeff": 0.056
+      }
+    ],
+    "power_cost": {
+      "energy": 20
+    },
+    "range": 40,
+    "gcd": 1.5
+  },
+  {
+    "name": "Leg Sweep",
+    "id": 119381,
+    "effects": [
+      {}
+    ],
+    "gcd": 1.5,
+    "cooldown": 60
+  },
+  {
+    "name": "Touch of Karma",
+    "id": 122470,
+    "effects": [
+      {}
+    ],
+    "range": 20,
+    "cooldown": 90
+  },
+  {
+    "name": "Zen Flight",
+    "id": 125883,
+    "effects": [
+      {}
+    ],
+    "gcd": 1
+  },
+  {
+    "name": "Reawaken",
+    "id": 212051,
+    "effects": [
+      {}
+    ],
+    "range": 100,
+    "cast": 10,
+    "gcd": 1.5
+  },
+  {
+    "name": "Expel Harm",
+    "id": 322101,
+    "effects": [
+      {
+        "sp_coeff": 1.2
+      }
+    ],
+    "power_cost": {
+      "energy": 15
+    },
+    "range": 100,
+    "gcd": 1,
+    "cooldown": 15
+  },
+  {
+    "name": "Touch of Death",
+    "id": 322109,
+    "effects": [
+      {}
+    ],
+    "range": 5,
+    "gcd": 1.5,
+    "cooldown": 180
+  },
+  {
+    "name": "Spinning Crane Kick",
+    "id": 322729,
+    "effects": [
+      {}
+    ],
+    "power_cost": {
+      "energy": 25
+    },
+    "gcd": 1.5
+  },
+  {
+    "name": "Single-Button Assistant",
+    "id": 1229376,
+    "effects": [
+      {}
+    ],
+    "range": 30,
+    "cast": 2
+  }
+]

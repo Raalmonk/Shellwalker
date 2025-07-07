@@ -5,6 +5,7 @@ import { Timeline } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 
 export default function App() {
+  
   const [haste, setHaste]   = useState(0);
   const [energy, setE]      = useState(100);
   const [chi, setChi]       = useState(0);

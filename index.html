@@ -1,14 +1,13 @@
-<!--  index.html  (放在根目录，不是 public/) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shellwalker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
-<body class="bg-slate-900 text-white">
+<body style="background:#111;color:#fff">
   <div id="root"></div>
-  <!-- Vite 在 dev 时自动注入 HMR，build 时自动指向压缩文件 -->
+  <!-- 入口脚本：Vite 会自动解析 /src/main.tsx -->
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

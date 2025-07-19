@@ -10,10 +10,10 @@ export interface TLItem {
 }
 
 const groups = [
-  'Boss技能(1)',
-  'Boss技能(2)',
   '踏风技能(1)',
   '踏风技能(2)',
+  '踏风技能(3)',
+  '踏风技能(4)',
 ];
 
 export const Timeline = ({ items, duration }: { items: TLItem[]; duration: number }) => {

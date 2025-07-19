@@ -230,5 +230,50 @@
     ],
     "range": 30,
     "cast": 2
+  },
+  {
+    "name": "Xuen",
+    "id": 123904,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 120
+  },
+  {
+    "name": "SEF",
+    "id": 137639,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 90
+  },
+  {
+    "name": "AA",
+    "id": 388201,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 60
+  },
+  {
+    "name": "SW",
+    "id": 392983,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 40
+  },
+  {
+    "name": "WU",
+    "id": 353947,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 45
   }
 ]

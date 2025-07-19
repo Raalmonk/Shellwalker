@@ -36,8 +36,8 @@ export const Timeline = ({ items, duration }: { items: TLItem[]; duration: numbe
         start: new Date(0),
         end: new Date(duration * 1000),
         format: {
-          minorLabels: (date: Date) => {
-            const sec = Math.floor(date.getTime() / 1000);
+          minorLabels: (date: any) => {
+            const sec = Math.floor(date.valueOf() / 1000);
             const m = String(Math.floor(sec / 60)).padStart(2, '0');
             const s = String(sec % 60).padStart(2, '0');
             return `${m}:${s}`;

@@ -22,6 +22,10 @@ export const Timeline = ({ items }: { items: TLItem[] }) => {
 
   return (
     <div className="relative" style={{marginLeft:80}}>
+      {/* time labels */}
+      {Array.from({ length: maxTime + 1 }).map((_, t) => (
+        <div key={t} style={{position:'absolute',left:t*scale-10,top:-20,width:20,textAlign:'center',fontSize:12}}>{t}</div>
+      ))}
       {/* grid lines */}
       {Array.from({length: maxTime+1}).map((_,t)=>(
         <div key={t} style={{position:'absolute',left:t*scale,top:0,height:rowH*4,width:1,background:'#555'}} />

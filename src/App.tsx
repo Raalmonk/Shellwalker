@@ -11,11 +11,12 @@ export default function App() {
   });
   const [items, setItems] = useState<TLItem[]>([]);
   const [time, setTime] = useState(0);
+  const [group, setGroup] = useState(3);
 
   const abilities = wwData(stats.haste);
 
   const click = (key: WWKey) => {
-    setItems(it => [...it, { id: it.length+1, group: 3, start: time, label: key }]);
+    setItems(it => [...it, { id: it.length + 1, group, start: time, label: key }]);
     setTime(t => t + 1);
   };
 
@@ -34,6 +35,16 @@ export default function App() {
           </label>
         ))}
       </div>
+
+      <label className="flex items-center gap-2">
+        Track:
+        <select value={group} onChange={e => setGroup(+e.target.value)} className="text-black">
+          <option value={1}>Boss技能(1)</option>
+          <option value={2}>Boss技能(2)</option>
+          <option value={3}>踏风技能(1)</option>
+          <option value={4}>踏风技能(2)</option>
+        </select>
+      </label>
 
       <div className="flex gap-2">
         {Object.keys(abilities).map(k =>

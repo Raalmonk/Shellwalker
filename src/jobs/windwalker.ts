@@ -1,6 +1,11 @@
 import { getSpell } from '../lib/spell-db';
 
 export const WW = {
+  Xuen: 123904,
+  SEF: 137639,
+  AA: 388201,
+  SW: 392983,
+  WU: 353947,
   TP: 100780,
   BOK: 100784,
   RSK: 107428,

@@ -12,8 +12,7 @@ export default function App() {
   const [items, setItems] = useState<TLItem[]>([]);
   const [time, setTime] = useState(0);
   const [group, setGroup] = useState(3);
-  const [theme, setTheme] = useState<'dark' | 'light'>('light');
-  const [duration, setDuration] = useState(45);
+
 
   useEffect(() => {
     document.body.classList.remove('dark', 'light');
@@ -38,15 +37,6 @@ export default function App() {
         切换 {theme === 'dark' ? '浅色' : '深色'}
       </button>
 
-      <label className="block">
-        查看时间范围 {duration}s
-        <input
-          type="range" min={45} max={600}
-          value={duration}
-          onChange={e => setDuration(+e.target.value)}
-          className="w-full"
-        />
-      </label>
 
       <div className="flex gap-4">
         {(['crit','haste','versa','mastery'] as const).map(f => (

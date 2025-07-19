@@ -16,7 +16,7 @@ const groups = [
   '踏风技能(2)',
 ];
 
-export const Timeline = ({ items, duration }: { items: TLItem[]; duration: number }) => {
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<VisTimeline | null>(null);
   const groupDS = useRef(new DataSet<DataGroup>(
@@ -30,29 +30,12 @@ export const Timeline = ({ items, duration }: { items: TLItem[]; duration: numbe
       containerRef.current,
       itemDS.current,
       groupDS.current,
-      {
-        stack: false,
-        height: '240px',
-        start: new Date(0),
-        end: new Date(duration * 1000),
-        format: {
-          minorLabels: (date: Date) => {
-            const sec = Math.floor(date.getTime() / 1000);
-            const m = String(Math.floor(sec / 60)).padStart(2, '0');
-            const s = String(sec % 60).padStart(2, '0');
-            return `${m}:${s}`;
-          },
-          majorLabels: () => '',
-        },
-      }
+
     );
   }, []);
 
   useEffect(() => {
-    timelineRef.current?.setWindow(new Date(0), new Date(duration * 1000));
-  }, [duration]);
 
-  useEffect(() => {
     itemDS.current.clear();
     itemDS.current.add(
       items.map(it => ({
@@ -62,7 +45,7 @@ export const Timeline = ({ items, duration }: { items: TLItem[]; duration: numbe
         start: new Date(it.start * 1000),
       }))
     );
-    timelineRef.current?.setWindow(new Date(0), new Date(duration * 1000));
+
   }, [items]);
 
   return <div ref={containerRef} />;

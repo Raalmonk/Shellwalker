@@ -12,7 +12,7 @@ export default function App() {
   const [items, setItems] = useState<TLItem[]>([]);
   const [time, setTime] = useState(0);
   const [group, setGroup] = useState(3);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
 
   useEffect(() => {
     document.body.classList.remove('dark', 'light');
@@ -36,6 +36,7 @@ export default function App() {
         className="px-2 py-1 border rounded">
         切换 {theme === 'dark' ? '浅色' : '深色'}
       </button>
+
 
       <div className="flex gap-4">
         {(['crit','haste','versa','mastery'] as const).map(f => (
@@ -63,7 +64,7 @@ export default function App() {
         )}
       </div>
 
-      <Timeline items={items} />
+      <Timeline items={items} duration={duration} />
     </div>
   );
 }

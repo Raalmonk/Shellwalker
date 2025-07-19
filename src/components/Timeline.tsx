@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { DataSet, Timeline as VisTimeline } from 'vis-timeline/standalone';
+import type { DataItem, DataGroup } from 'vis-timeline';
 
 export interface TLItem {
   id: number;
@@ -15,34 +17,35 @@ const groups = [
 ];
 
 export const Timeline = ({ items }: { items: TLItem[] }) => {
-  const width = 800;
-  const rowH = 40;
-  const scale = 50; // px per second
-  const maxTime = items.reduce((m, i) => Math.max(m, i.start), 0) + 5;
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const timelineRef = useRef<VisTimeline | null>(null);
+  const groupDS = useRef(new DataSet<DataGroup>(
+    groups.map((g, i) => ({ id: i + 1, content: g }))
+  ));
+  const itemDS = useRef(new DataSet<DataItem>());
 
-  return (
-    <div className="relative" style={{marginLeft:80}}>
-      {/* time labels */}
-      {Array.from({ length: maxTime + 1 }).map((_, t) => (
-        <div key={t} style={{position:'absolute',left:t*scale-10,top:-20,width:20,textAlign:'center',fontSize:12}}>{t}</div>
-      ))}
-      {/* grid lines */}
-      {Array.from({length: maxTime+1}).map((_,t)=>(
-        <div key={t} style={{position:'absolute',left:t*scale,top:0,height:rowH*4,width:1,background:'#555'}} />
-      ))}
-      {/* group labels */}
-      {groups.map((g,idx)=>(
-        <div key={idx} style={{position:'absolute',top:idx*rowH,left:-80,width:80,height:rowH,lineHeight:`${rowH}px`,textAlign:'right',paddingRight:4}}>{g}</div>
-      ))}
-      {/* items */}
-      <div style={{position:'relative',width:maxTime*scale,height:rowH*4,border:'1px solid #555'}}>
-        {items.map(it=> (
-          <div key={it.id}
-            style={{position:'absolute',left:it.start*scale,top:(it.group-1)*rowH+10,width:40,height:20,background:'#38bdf8',color:'#000',fontSize:12,textAlign:'center',lineHeight:'20px'}}>
-            {it.label}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    if (!containerRef.current || timelineRef.current) return;
+    timelineRef.current = new VisTimeline(
+      containerRef.current,
+      itemDS.current,
+      groupDS.current,
+      { stack: false, height: '240px' }
+    );
+  }, []);
+
+  useEffect(() => {
+    itemDS.current.clear();
+    itemDS.current.add(
+      items.map(it => ({
+        id: it.id,
+        group: it.group,
+        content: it.label,
+        start: new Date(it.start * 1000),
+      }))
+    );
+    timelineRef.current?.fit();
+  }, [items]);
+
+  return <div ref={containerRef} />;
 };

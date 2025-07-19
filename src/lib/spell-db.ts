@@ -24,5 +24,8 @@ export const getSpell = (id: number, rating = 0) => {
   if (!s) {
     throw new Error(`❌ Spell id ${id} not found in monk_spells.json`);
   }
-  // …后面保持不变
+  const haste = ratingToHaste(rating);
+  const gcd = 1; // 踏风固定 1s GCD
+  const castEff = effTime(s.cast ?? 0, haste, 0);
+  return { ...s, gcd, castEff };
 };

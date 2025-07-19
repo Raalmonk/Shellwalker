@@ -12,7 +12,6 @@ export default function App() {
   });
   const [items, setItems] = useState<TLItem[]>([]);
   const [time, setTime] = useState(0);
-  const [group, setGroup] = useState(3);
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [duration, setDuration] = useState(45);
 
@@ -24,11 +23,24 @@ export default function App() {
 
   const abilities = wwData(stats.haste);
 
+  const groupMap: Record<WWKey, number> = {
+    Xuen: 1,
+    SEF: 1,
+    AA: 2,
+    SW: 2,
+    FoF: 3,
+    RSK: 3,
+    WU: 3,
+    TP: 4,
+    BOK: 4,
+  };
+
   const click = (key: WWKey) => {
     const ability = abilities[key];
     const label = key === 'TP'
       ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
       : ability.name;
+    const group = groupMap[key];
     setItems(it => [...it, { id: it.length + 1, group, start: time, label }]);
     setTime(t => t + 1);
   };
@@ -64,15 +76,6 @@ export default function App() {
         ))}
       </div>
 
-      <label className="flex items-center gap-2">
-        Track:
-        <select value={group} onChange={e => setGroup(+e.target.value)} className="text-black">
-          <option value={1}>Boss技能(1)</option>
-          <option value={2}>Boss技能(2)</option>
-          <option value={3}>踏风技能(1)</option>
-          <option value={4}>踏风技能(2)</option>
-        </select>
-      </label>
 
       <div className="flex gap-2">
         {Object.keys(abilities).map(k =>

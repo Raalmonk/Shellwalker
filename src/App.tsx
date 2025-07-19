@@ -1,31 +1,39 @@
 import React, { useState } from 'react';
-import { HasteSlider } from './components/HasteSlider';
-import { ResourceBar } from './components/ResourceBar';
-import { Timeline } from './components/Timeline';
+import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 
 export default function App() {
-  
-  const [haste, setHaste]   = useState(0);
-  const [energy, setE]      = useState(100);
-  const [chi, setChi]       = useState(0);
-  const [queue, setQueue]   = useState<WWKey[]>([]);
+  const [stats, setStats] = useState({
+    crit: 0,
+    haste: 0,
+    versa: 0,
+    mastery: 0,
+  });
+  const [items, setItems] = useState<TLItem[]>([]);
+  const [time, setTime] = useState(0);
 
-  const abilities = wwData(haste);
+  const abilities = wwData(stats.haste);
 
   const click = (key: WWKey) => {
-    const sp = abilities[key];
-    setE(e => Math.max(0, e - (sp.power_cost?.energy ?? 0)));
-    setChi(c => Math.min(6, c - (sp.power_cost?.chi ?? 0) +
-                         (key==='TP'?2:0)));
-    setQueue(q => [...q, key]);
+    setItems(it => [...it, { id: it.length+1, group: 3, start: time, label: key }]);
+    setTime(t => t + 1);
   };
 
-  return (
-    <div className="p-4 space-y-4">
-      <h1 className="text-xl font-bold">Shellwalker Sandbox</h1>
+  const update = (field: string, value: number) =>
+    setStats(s => ({ ...s, [field]: value }));
 
-      <HasteSlider value={haste} onChange={setHaste} />
+  return (
+    <div className="p-4 space-y-4 text-white">
+      <h1 className="text-xl font-bold">踏风排轴器</h1>
+
+      <div className="flex gap-4">
+        {(['crit','haste','versa','mastery'] as const).map(f => (
+          <label key={f} className="flex flex-col text-sm">
+            {f}
+            <input type="number" value={stats[f]} onChange={e=>update(f, +e.target.value)} className="text-black" />
+          </label>
+        ))}
+      </div>
 
       <div className="flex gap-2">
         {Object.keys(abilities).map(k =>
@@ -34,9 +42,7 @@ export default function App() {
         )}
       </div>
 
-      <ResourceBar energy={energy} chi={chi} />
-
-      <Timeline queue={queue} />
+      <Timeline items={items} />
     </div>
   );
 }

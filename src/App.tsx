@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
+import TPIcon from './Pics/TP.jpg';
 
 export default function App() {
   const [stats, setStats] = useState({
@@ -24,7 +25,11 @@ export default function App() {
   const abilities = wwData(stats.haste);
 
   const click = (key: WWKey) => {
-    setItems(it => [...it, { id: it.length + 1, group, start: time, label: key }]);
+    const ability = abilities[key];
+    const label = key === 'TP'
+      ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
+      : ability.name;
+    setItems(it => [...it, { id: it.length + 1, group, start: time, label }]);
     setTime(t => t + 1);
   };
 
@@ -72,7 +77,12 @@ export default function App() {
       <div className="flex gap-2">
         {Object.keys(abilities).map(k =>
           <button key={k} onClick={()=>click(k as WWKey)}
-            className="px-2 py-1 bg-blue-500 text-white rounded">{k}</button>
+            className="px-2 py-1 bg-blue-500 text-white rounded">
+            {k === 'TP'
+              ? <img src={TPIcon} alt={abilities[k as WWKey].name}
+                  className="w-8 h-8" />
+              : k}
+          </button>
         )}
       </div>
 

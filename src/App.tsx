@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 
@@ -12,6 +12,12 @@ export default function App() {
   const [items, setItems] = useState<TLItem[]>([]);
   const [time, setTime] = useState(0);
   const [group, setGroup] = useState(3);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    document.body.classList.remove('dark', 'light');
+    document.body.classList.add(theme);
+  }, [theme]);
 
   const abilities = wwData(stats.haste);
 
@@ -24,8 +30,12 @@ export default function App() {
     setStats(s => ({ ...s, [field]: value }));
 
   return (
-    <div className="p-4 space-y-4 text-white">
+    <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">踏风排轴器</h1>
+      <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        className="px-2 py-1 border rounded">
+        切换 {theme === 'dark' ? '浅色' : '深色'}
+      </button>
 
       <div className="flex gap-4">
         {(['crit','haste','versa','mastery'] as const).map(f => (

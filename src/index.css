@@ -1,4 +1,15 @@
+@import 'vis-timeline/styles/vis-timeline-graph2d.css';
 /* Tailwind 示例 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body.dark {
+  background: #111;
+  color: #fff;
+}
+
+body.light {
+  background: #fff;
+  color: #000;
+}

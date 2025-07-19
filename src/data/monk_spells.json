@@ -69,6 +69,33 @@
     "gcd": 1.5
   },
   {
+    "name": "Rising Sun Kick",
+    "id": 107428,
+    "effects": [
+      {}
+    ],
+    "power_cost": {
+      "chi": 2
+    },
+    "range": 5,
+    "gcd": 1,
+    "cooldown": 10
+  },
+  {
+    "name": "Fists of Fury",
+    "id": 113656,
+    "effects": [
+      {}
+    ],
+    "power_cost": {
+      "chi": 3
+    },
+    "range": 8,
+    "cast": 4,
+    "gcd": 1,
+    "cooldown": 24
+  },
+  {
     "name": "Roll",
     "id": 109132,
     "effects": [

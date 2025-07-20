@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
+import { ratingToHaste } from './lib/haste';
 import TPIcon from './Pics/TP.jpg';
 
 export default function App() {
@@ -50,10 +51,11 @@ export default function App() {
   const click = (key: WWKey) => {
     const now = time;
     const ability = abilities[key];
-    // remaining cooldown records for this ability
-    const cds = (cooldowns[key] || []).filter(cd => cd.end > now);
+    // existing cooldown records for this ability (keep history)
+    const cds = cooldowns[key] || [];
+    const active = cds.filter(cd => cd.end > now);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
-    if (cds.length >= maxCharges) {
+    if (active.length >= maxCharges) {
       alert('cd没转好');
       return;
     }
@@ -63,7 +65,7 @@ export default function App() {
     const group = groupMap[key];
     setItems(it => [...it, { id: it.length + 1, group, start: now, label }]);
     const baseCd = ability.cooldown ?? 0;
-    const hastePct = stats.haste / 100;
+    const hastePct = ratingToHaste(stats.haste);
     const finalCd = ['RSK','FoF','WU'].includes(key)
       ? baseCd / (1 + hastePct)
       : baseCd;
@@ -148,7 +150,7 @@ export default function App() {
       </div>
 
       <div className="space-y-1 text-sm">
-        <div>Haste: {stats.haste}% ({(stats.haste / 100).toFixed(2)})</div>
+        <div>Haste Rating: {stats.haste} ({(ratingToHaste(stats.haste) * 100).toFixed(2)}%)</div>
         <div>
           SEF Charges:
           {Math.max(

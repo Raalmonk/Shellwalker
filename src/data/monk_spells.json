@@ -265,6 +265,7 @@
     "effects": [
       {}
     ],
+    "cast": 0.4,
     "gcd": 1,
     "cooldown": 30
   },

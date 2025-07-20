@@ -29,3 +29,8 @@ body.light {
 /* ensure selected items keep the warning color */
 .vis-item.warning.vis-selected { border-color: orange; }
 
+.vis-item.buff {
+  background-color: rgba(0, 255, 0, 0.2);
+  border-color: rgba(0, 128, 0, 0.5);
+}
+

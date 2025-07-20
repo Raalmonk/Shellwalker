@@ -16,11 +16,11 @@ export interface TLItem {
 
 const groups = [
   "Boss技能",
+  "Buff",
   "Major Cooldown",
   "Minor Cooldown",
   "Major Filler",
   "Minor Filler",
-  "Buff",
 ];
 
 // Position of a cooldown finishing mark shown as a vertical line
@@ -103,7 +103,7 @@ export const Timeline = ({
       groupDS.current,
       {
         stack: false,
-        height: "240px",
+        height: "400px",
         start: new Date(start * 1000),
         end: new Date(end * 1000),
         editable: { updateTime: true },

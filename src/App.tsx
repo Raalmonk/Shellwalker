@@ -106,16 +106,16 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 3,
-    SEF: 3,
-    CC: 3,
-    AA: 4,
-    SW: 4,
-    FoF: 5,
-    RSK: 5,
-    WU: 5,
-    TP: 6,
-    BOK: 6,
+    Xuen: 4,
+    SEF: 4,
+    CC: 4,
+    AA: 5,
+    SW: 5,
+    FoF: 6,
+    RSK: 6,
+    WU: 6,
+    TP: 7,
+    BOK: 7,
   };
 
   // handler when an ability button is clicked
@@ -157,10 +157,10 @@ export default function App() {
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 2 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 2 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
@@ -170,7 +170,7 @@ export default function App() {
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 2 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
       extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 2 } as any);
       setNextBuffId(nextBuffId - 2);
@@ -258,7 +258,7 @@ export default function App() {
       if (extra > 0) {
         res.push({
           id: 10000 + i,
-          group: 2,
+          group: 3,
           start: s,
           end: e,
           label: `青龙+${extra.toFixed(2)}cd/s`,

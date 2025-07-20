@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
-import { cdEnd } from './lib/cooldown';
+import { getEndAt } from './utils/getEndAt';
+import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
 
 export interface BuffRec { key: string; start: number; end: number }
@@ -45,8 +46,7 @@ export default function App() {
   const [duration, setDuration] = useState(45);
   const [viewStart, setViewStart] = useState(0);
   // cooldown records for each ability
-  interface CDRec { id:number; start:number; base:number; hasted:boolean; end:number; }
-  const [cooldowns, setCooldowns] = useState<Record<string, CDRec[]>>({});
+  const [casts, setCasts] = useState<Record<string, SkillCast[]>>({});
   const [nextId, setNextId] = useState(1);
   const [showCD, setShowCD] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
@@ -84,14 +84,12 @@ export default function App() {
 
   const isOnCD = (key: WWKey, start: number, exclude?: number) => {
     const ability = abilities[key];
-    const cds = (cooldowns[key] || []).filter(cd => cd.id !== exclude);
+    const recs = (casts[key] || []).filter(c => c.id !== String(exclude));
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
-    const hastePct = ratingToHaste(stats.haste);
-    const dur = ['RSK', 'FoF', 'WU'].includes(key)
-      ? (ability.cooldown ?? 0) / (1 + hastePct)
-      : ability.cooldown ?? 0;
-    const end = start + dur;
-    const overlaps = cds.filter(cd => start < cd.end && end > cd.start);
+    const overlaps = recs.filter(c => {
+      const end = getEndAt(c, buffs);
+      return start < end && end > c.start;
+    });
     return overlaps.length >= maxCharges;
   };
 
@@ -99,20 +97,7 @@ export default function App() {
   const isChanneling = (start: number, exclude?: number) =>
     items.some(it => it.id !== exclude && it.end !== undefined && start < it.end && start >= it.start);
 
-  // recalc cooldown end times when haste rating changes
-  useEffect(() => {
-    const hastePct = ratingToHaste(stats.haste);
-    setCooldowns(cdObj => {
-      const out: Record<string, CDRec[]> = {};
-      for (const [k, recs] of Object.entries(cdObj)) {
-        out[k] = recs.map(r => {
-          const dur = r.hasted ? r.base / (1 + hastePct) : r.base;
-          return { ...r, end: r.start + dur };
-        });
-      }
-      return out;
-    });
-  }, [stats.haste]);
+
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
@@ -137,8 +122,8 @@ export default function App() {
       ? castDurBase * fofModAt(now)
       : castDurBase;
     // existing cooldown records for this ability (keep history)
-    const cds = cooldowns[key] || [];
-    const active = cds.filter(cd => cd.end > now);
+    const cds = casts[key] || [];
+    const active = cds.filter(cd => getEndAt(cd, buffs) > now);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (active.length >= maxCharges) {
       alert('cd没转好');
@@ -203,24 +188,14 @@ export default function App() {
     }
 
     const baseCd = ability.cooldown ?? 0;
-    const pendingBuffs = [...buffs, ...extraBuffs];
-    const speedAt = (t: number, b: Buff[]) => {
-      const h = 1 + hasteAt(t, b, stats.haste);
-      const s = cdSpeedAt(t, b);
-      return ['RSK', 'FoF', 'WU'].includes(key) ? s * h : s;
-    };
-    const endAt = cdEnd(now, baseCd, pendingBuffs, speedAt);
-    // store cooldown range so it can be visualised later
-    setCooldowns(cdObj => ({
+    setCasts(cdObj => ({
       ...cdObj,
       [key]: [
         ...cds,
         {
-          id,
+          id: String(id),
           start: now,
           base: baseCd,
-          hasted: false,
-          end: endAt,
         },
       ],
     }));
@@ -228,37 +203,37 @@ export default function App() {
   };
 
   // vertical lines showing when a cooldown finishes
-  const cdLines = Object.entries(cooldowns)
+  const cdLines = Object.entries(casts)
     .flatMap(([k, recs]) =>
-      (recs || [])
-        .filter(cd => cd.end > time)
-        .map((cd, i) => ({ id: `${k}-${i}`, time: cd.end }))
+      recs
+        .map((c, i) => {
+          const end = getEndAt(c, buffs);
+          return end > time ? { id: `${k}-${i}`, time: end } : null;
+        })
+        .filter(Boolean) as TLItem[]
     );
 
   // helper to show remaining cooldown next to each ability button
   const cdLabel = (key: WWKey) => {
     const ability = abilities[key];
-    const cds = (cooldowns[key] || []).filter(cd => cd.start <= time && cd.end > time);
+    const cds = (casts[key] || []).filter(c => c.start <= time && getEndAt(c, buffs) > time);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (cds.length < maxCharges) return 'Ready';
     const end = maxCharges === 1
-      ? Math.max(...cds.map(cd => cd.end))
-      : Math.min(...cds.map(cd => cd.end));
-    const remaining = Math.max(
-      0,
-      Math.ceil(end - time - 1e-6)
-    );
+      ? Math.max(...cds.map(c => getEndAt(c, buffs)))
+      : Math.min(...cds.map(c => getEndAt(c, buffs)));
+    const remaining = +(end - time).toFixed(2);
     return `CD ${remaining}s`;
   };
 
   // items used to display cooldown ranges on the timeline
   const cdBars: TLItem[] = showCD
-    ? Object.entries(cooldowns).flatMap(([k, recs]) =>
-        (recs || []).map((cd, i) => ({
+    ? Object.entries(casts).flatMap(([k, recs]) =>
+        recs.map((c, i) => ({
           id: `cd-bar-${k}-${i}`,
           group: groupMap[k as WWKey],
-          start: cd.start,
-          end: cd.end,
+          start: c.start,
+          end: getEndAt(c, buffs),
           label: '',
           className: 'cd-bar',
         }))
@@ -316,15 +291,10 @@ export default function App() {
     }));
     const delta = start - (target?.start || 0);
     setBuffs(bs => bs.map(b => b.src === id ? { ...b, start: b.start + delta, end: b.end + delta } : b));
-    const hastePct = ratingToHaste(stats.haste);
-    setCooldowns(cdObj => {
-      const out: Record<string, CDRec[]> = {};
-      for (const [k, recs] of Object.entries(cdObj)) {
-        out[k] = recs.map(r => {
-          if (r.id !== id) return r;
-          const dur = r.hasted ? r.base / (1 + hastePct) : r.base;
-          return { ...r, start, end: start + dur };
-        });
+    setCasts(cs => {
+      const out: Record<string, SkillCast[]> = {};
+      for (const [k, recs] of Object.entries(cs)) {
+        out[k] = recs.map(r => (r.id !== String(id) ? r : { ...r, start }));
       }
       return out;
     });
@@ -336,10 +306,10 @@ export default function App() {
       if (!it) return items;
       if (it.className === 'highlight') {
         // delete item
-        setCooldowns(cdObj => {
-          const out: Record<string, CDRec[]> = {};
-          for (const [k, recs] of Object.entries(cdObj)) {
-            out[k] = recs.filter(r => r.id !== id);
+        setCasts(cs => {
+          const out: Record<string, SkillCast[]> = {};
+          for (const [k, recs] of Object.entries(cs)) {
+            out[k] = recs.filter(r => r.id !== String(id));
           }
           return out;
         });
@@ -358,10 +328,10 @@ export default function App() {
     const it = items.find(i => i.id === selected);
     if (!it || !it.ability) return;
     const key = it.ability as WWKey;
-    const prev = (cooldowns[key] || [])
-      .filter(cd => cd.id !== selected && cd.start < it.start)
+    const prev = (casts[key] || [])
+      .filter(cd => cd.id !== String(selected) && cd.start < it.start)
       .sort((a, b) => b.start - a.start)[0];
-    if (prev) moveItem(selected, prev.end);
+    if (prev) moveItem(selected, getEndAt(prev, buffs));
   };
 
   const update = (field: string, value: number) =>
@@ -409,7 +379,7 @@ export default function App() {
           {Math.max(
             0,
             (abilities.SEF.charges ?? 2) -
-              (cooldowns['SEF'] || []).filter(cd => cd.start <= time && cd.end > time).length
+              (casts['SEF'] || []).filter(c => c.start <= time && getEndAt(c, buffs) > time).length
           )}
         </div>
         <div>时间: {formatTime(time)}</div>
@@ -436,8 +406,9 @@ export default function App() {
 
       {selected !== null && (() => {
         const it = items.find(i => i.id === selected);
-        const cd = it && cooldowns[it.ability ?? '']?.find(c => c.id === selected);
+        const cd = it && casts[it.ability ?? '']?.find(c => c.id === String(selected));
         if (!it || !cd) return null;
+        const endAt = getEndAt(cd, buffs);
         return (
           <div className="border p-2 space-y-1 text-sm">
             <div>{abilities[it.ability as WWKey].name}</div>
@@ -460,9 +431,9 @@ export default function App() {
                 className="ml-2 w-20 text-black"
               />
             </label>
-            <div>转好时间: {formatTime(cd.end)}</div>
+            <div>转好时间: {formatTime(endAt)}</div>
             {(() => {
-              const prev = (cooldowns[it.ability ?? ''] || [])
+              const prev = (casts[it.ability ?? ''] || [])
                 .filter(c => c.id !== selected && c.start < it.start)
                 .sort((a, b) => b.start - a.start)[0];
               return (

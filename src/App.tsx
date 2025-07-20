@@ -3,7 +3,8 @@ import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
-import { fmtSec } from './util/fmtSec';
+import { buildTimeline } from './lib/simulator';
+import { fmt } from './util/fmt';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
 
@@ -68,6 +69,8 @@ export default function App() {
   }, [theme]);
 
   const abilities = wwData(stats.haste);
+
+  const timeline = React.useMemo(() => buildTimeline(casts, buffs), [casts, buffs]);
 
   const buffsAt = (t: number, extra: Buff[] = []) =>
     [...buffs, ...extra].filter(b => t >= b.start && t < b.end);
@@ -204,37 +207,34 @@ export default function App() {
   };
 
   // vertical lines showing when a cooldown finishes
-  const cdLines = Object.entries(casts)
+  const cdLines = Object.entries(timeline)
     .flatMap(([k, recs]) =>
       recs
-        .map((c, i) => {
-          const end = getEndAt(c, buffs);
-          return end > time ? { id: `${k}-${i}`, time: end } : null;
-        })
+        .map((c, i) => (c.end > time ? { id: `${k}-${i}`, time: c.end } : null))
         .filter(Boolean) as TLItem[]
     );
 
   // helper to show remaining cooldown next to each ability button
   const cdLabel = (key: WWKey) => {
     const ability = abilities[key];
-    const cds = (casts[key] || []).filter(c => c.start <= time && getEndAt(c, buffs) > time);
+    const cds = (timeline[key] || []).filter(c => c.start <= time && c.end > time);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (cds.length < maxCharges) return 'Ready';
     const end = maxCharges === 1
-      ? Math.max(...cds.map(c => getEndAt(c, buffs)))
-      : Math.min(...cds.map(c => getEndAt(c, buffs)));
-    const remaining = fmtSec(end - time);
+      ? Math.max(...cds.map(c => c.end))
+      : Math.min(...cds.map(c => c.end));
+    const remaining = fmt(end - time);
     return `CD ${remaining}s`;
   };
 
   // items used to display cooldown ranges on the timeline
   const cdBars: TLItem[] = showCD
-    ? Object.entries(casts).flatMap(([k, recs]) =>
+    ? Object.entries(timeline).flatMap(([k, recs]) =>
         recs.map((c, i) => ({
           id: `cd-bar-${k}-${i}`,
           group: groupMap[k as WWKey],
           start: c.start,
-          end: getEndAt(c, buffs),
+          end: c.end,
           label: '',
           className: 'cd-bar',
         }))

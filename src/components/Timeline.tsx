@@ -73,7 +73,7 @@ export const Timeline = ({ items, start, end, cursor, cds, showCD, onCursorChang
             item.start.valueOf() / 1000,
             item.end ? item.end.valueOf() / 1000 : undefined
           );
-          callback(item);
+          callback(null);
         },
         format: {
           minorLabels: (date: any) => {

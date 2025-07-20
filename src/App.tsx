@@ -151,26 +151,58 @@ export default function App() {
 
   const moveItem = (id: number, start: number, end?: number) => {
     const target = items.find(i => i.id === id);
-    const abilityKey = target?.ability as WWKey | undefined;
-    const notReady = abilityKey ? isOnCD(abilityKey, start, id) : false;
-    setItems(items => items.map(it => {
-      if (it.id !== id) return it;
-      let cls = (it.className || '').replace('warning', '').trim();
-      if (notReady) cls = (cls + ' warning').trim();
-      return { ...it, start, end, className: cls };
-    }));
+    if (!target) return;
+    const abilityKey = target.ability as WWKey | undefined;
+
+    const cds = abilityKey
+      ? (cooldowns[abilityKey] || []).filter(cd => cd.id !== id)
+      : [];
+    const ability = abilityKey ? abilities[abilityKey] : undefined;
+    const maxCharges = abilityKey === 'SEF' ? ability?.charges ?? 2 : 1;
     const hastePct = ratingToHaste(stats.haste);
+    const dur = abilityKey && ['RSK', 'FoF', 'WU'].includes(abilityKey)
+      ? (ability?.cooldown ?? 0) / (1 + hastePct)
+      : ability?.cooldown ?? 0;
+    const newEnd = start + (dur ?? 0);
+    const overlaps = cds.filter(cd => start < cd.end && newEnd > cd.start);
+    const notReady = abilityKey ? overlaps.length >= maxCharges : false;
+
+    let cls = (target.className || '').replace('warning', '').trim();
+    if (notReady) cls = (cls + ' warning').trim();
+
+    const newId = nextId;
+    setNextId(n => n + 1);
+
+    setItems(items => [
+      ...items.filter(i => i.id !== id),
+      { ...target, id: newId, start, end, className: cls },
+    ]);
+
     setCooldowns(cdObj => {
       const out: Record<string, CDRec[]> = {};
       for (const [k, recs] of Object.entries(cdObj)) {
-        out[k] = recs.map(r => {
-          if (r.id !== id) return r;
-          const dur = r.hasted ? r.base / (1 + hastePct) : r.base;
-          return { ...r, start, end: start + dur };
-        });
+        out[k] = recs.filter(r => r.id !== id);
+      }
+      if (abilityKey) {
+        const base = ability?.cooldown ?? 0;
+        const final = ['RSK', 'FoF', 'WU'].includes(abilityKey)
+          ? base / (1 + hastePct)
+          : base;
+        out[abilityKey] = [
+          ...(out[abilityKey] || []),
+          {
+            id: newId,
+            start,
+            base,
+            hasted: ['RSK', 'FoF', 'WU'].includes(abilityKey),
+            end: start + final,
+          },
+        ];
       }
       return out;
     });
+
+    if (selected === id) setSelected(newId);
   };
 
   const contextItem = (id: number) => {

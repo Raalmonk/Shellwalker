@@ -20,6 +20,7 @@ export default function App() {
   const [cooldowns, setCooldowns] = useState<Record<string, CDRec[]>>({});
   const [nextId, setNextId] = useState(1);
   const [showCD, setShowCD] = useState(false);
+  const [selected, setSelected] = useState<number | null>(null);
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -34,6 +35,14 @@ export default function App() {
   }, [theme]);
 
   const abilities = wwData(stats.haste);
+
+  const isOnCD = (key: WWKey, t: number, exclude?: number) => {
+    const ability = abilities[key];
+    const cds = (cooldowns[key] || []).filter(cd => cd.id !== exclude);
+    const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
+    const active = cds.filter(cd => cd.start <= t && cd.end > t);
+    return active.length >= maxCharges;
+  };
 
   // recalc cooldown end times when haste rating changes
   useEffect(() => {
@@ -132,7 +141,15 @@ export default function App() {
     : [];
 
   const moveItem = (id: number, start: number, end?: number) => {
-    setItems(items => items.map(it => it.id === id ? { ...it, start, end } : it));
+    const target = items.find(i => i.id === id);
+    const abilityKey = target?.ability as WWKey | undefined;
+    const notReady = abilityKey ? isOnCD(abilityKey, start, id) : false;
+    setItems(items => items.map(it => {
+      if (it.id !== id) return it;
+      let cls = (it.className || '').replace('warning', '').trim();
+      if (notReady) cls = (cls + ' warning').trim();
+      return { ...it, start, end, className: cls };
+    }));
     const hastePct = ratingToHaste(stats.haste);
     setCooldowns(cdObj => {
       const out: Record<string, CDRec[]> = {};
@@ -165,6 +182,21 @@ export default function App() {
         return items.map(i => i.id === id ? { ...i, className: 'highlight' } : i);
       }
     });
+  };
+
+  const selectItem = (id: number) => setSelected(id);
+
+  const snapSelected = () => {
+    if (selected == null) return;
+    const it = items.find(i => i.id === selected);
+    if (!it || !it.ability) return;
+    const key = it.ability as WWKey;
+    const cds = (cooldowns[key] || []).filter(cd => cd.start <= it.start && cd.end > it.start && cd.id !== selected);
+    const maxCharges = key === 'SEF' ? abilities[key].charges ?? 2 : 1;
+    if (cds.length >= maxCharges) {
+      const earliest = Math.min(...cds.map(cd => cd.end));
+      moveItem(selected, earliest);
+    }
   };
 
   const update = (field: string, value: number) =>
@@ -236,6 +268,38 @@ export default function App() {
         ))}
       </div>
 
+      {selected !== null && (() => {
+        const it = items.find(i => i.id === selected);
+        const cd = it && cooldowns[it.ability ?? '']?.find(c => c.id === selected);
+        if (!it || !cd) return null;
+        return (
+          <div className="border p-2 space-y-1 text-sm">
+            <div>{abilities[it.ability as WWKey].name}</div>
+            <label className="block">
+              释放时间
+              <input
+                type="range"
+                min={0}
+                max={duration}
+                step={0.1}
+                value={it.start}
+                onChange={e => moveItem(it.id, +e.target.value)}
+                className="w-full"
+              />
+              <input
+                type="number"
+                step={0.1}
+                value={it.start}
+                onChange={e => moveItem(it.id, +e.target.value)}
+                className="ml-2 w-20 text-black"
+              />
+            </label>
+            <div>转好时间: {formatTime(cd.end)}</div>
+            <button onClick={snapSelected} className="px-2 py-1 border rounded">On CD</button>
+          </div>
+        );
+      })()}
+
       <Timeline
         items={[...items, ...cdBars]}
         duration={duration}
@@ -245,6 +309,7 @@ export default function App() {
         onCursorChange={setTime}
         onItemMove={moveItem}
         onItemContext={contextItem}
+        onItemClick={selectItem}
       />
     </div>
   );

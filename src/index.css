@@ -24,3 +24,6 @@ body.light {
   background-color: rgba(255, 0, 0, 0.4);
   border-color: red;
 }
+
+.vis-item.warning { border-color: orange; }
+

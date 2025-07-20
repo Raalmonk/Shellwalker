@@ -125,9 +125,12 @@ export default function App() {
     const cds = (cooldowns[key] || []).filter(cd => cd.start <= time && cd.end > time);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (cds.length < maxCharges) return 'Ready';
+    const end = maxCharges === 1
+      ? Math.max(...cds.map(cd => cd.end))
+      : Math.min(...cds.map(cd => cd.end));
     const remaining = Math.max(
       0,
-      Math.ceil(Math.min(...cds.map(cd => cd.end)) - time - 1e-6)
+      Math.ceil(end - time - 1e-6)
     );
     return `CD ${remaining}s`;
   };

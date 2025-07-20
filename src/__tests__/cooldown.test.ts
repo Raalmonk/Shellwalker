@@ -1,30 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { Skill, startSkill, advance, timeline } from '../logic/cooldown';
+import { cdEnd } from '../lib/cooldown';
+import { cdSpeedAt, hasteAt, BuffRec } from '../App';
 
-const AA: Skill = { id: 'AA', castTime: 0, cooldown: 30000 };
-const QL: Skill = { id: 'QL', castTime: 0, cooldown: 0 };
+const ql: BuffRec[] = [{ key: 'AA_BD', start: 0, end: 6 }];
 
-describe('Cooldown – absolute timestamp model', () => {
-  it('AA should be ready at 25.5 s, not 17.1 s', () => {
-    let cd = startSkill({}, AA, 0);
-    cd = advance(cd, 0, 4500);
-    expect(cd.AA - 4500).toBe(25500);
+describe('cdEnd integration', () => {
+  it('FoF ends at 19.5 s', () => {
+    const end = cdEnd(0, 24, ql, (t, b) => cdSpeedAt(t, b));
+    expect(end).toBeCloseTo(19.5, 1);
   });
 
-  it('timeline produces correct per-1000ms snapshot', () => {
-    const shots = timeline(
-      {},
-      [
-        { t: 0, op: 'start', skill: AA },
-        { t: 0, op: 'start', skill: QL },
-        { t: 4500, op: 'remove', id: 'QL' },
-      ],
-      30000,
-      1000,
-    );
-    expect(shots[5].cd.AA - shots[5].t).toBeGreaterThan(24999);
-    expect(shots[5].cd.AA - shots[5].t).toBeLessThan(25001);
+  it('AA ends at 25.5 s', () => {
+    const end = cdEnd(0, 30, ql, (t, b) => cdSpeedAt(t, b) * (1 + hasteAt(t, b)));
+    expect(end).toBeCloseTo(25.5, 1);
   });
 });
-
-// END_PATCH

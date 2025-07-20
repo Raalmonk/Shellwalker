@@ -36,12 +36,17 @@ export default function App() {
 
   const abilities = wwData(stats.haste);
 
-  const isOnCD = (key: WWKey, t: number, exclude?: number) => {
+  const isOnCD = (key: WWKey, start: number, exclude?: number) => {
     const ability = abilities[key];
     const cds = (cooldowns[key] || []).filter(cd => cd.id !== exclude);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
-    const active = cds.filter(cd => cd.start <= t && cd.end > t);
-    return active.length >= maxCharges;
+    const hastePct = ratingToHaste(stats.haste);
+    const dur = ['RSK', 'FoF', 'WU'].includes(key)
+      ? (ability.cooldown ?? 0) / (1 + hastePct)
+      : ability.cooldown ?? 0;
+    const end = start + dur;
+    const overlaps = cds.filter(cd => start < cd.end && end > cd.start);
+    return overlaps.length >= maxCharges;
   };
 
   // recalc cooldown end times when haste rating changes
@@ -191,12 +196,10 @@ export default function App() {
     const it = items.find(i => i.id === selected);
     if (!it || !it.ability) return;
     const key = it.ability as WWKey;
-    const cds = (cooldowns[key] || []).filter(cd => cd.start <= it.start && cd.end > it.start && cd.id !== selected);
-    const maxCharges = key === 'SEF' ? abilities[key].charges ?? 2 : 1;
-    if (cds.length >= maxCharges) {
-      const earliest = Math.min(...cds.map(cd => cd.end));
-      moveItem(selected, earliest);
-    }
+    const prev = (cooldowns[key] || [])
+      .filter(cd => cd.id !== selected && cd.start < it.start)
+      .sort((a, b) => b.start - a.start)[0];
+    if (prev) moveItem(selected, prev.end);
   };
 
   const update = (field: string, value: number) =>
@@ -295,7 +298,20 @@ export default function App() {
               />
             </label>
             <div>转好时间: {formatTime(cd.end)}</div>
-            <button onClick={snapSelected} className="px-2 py-1 border rounded">On CD</button>
+            {(() => {
+              const prev = (cooldowns[it.ability ?? ''] || [])
+                .filter(c => c.id !== selected && c.start < it.start)
+                .sort((a, b) => b.start - a.start)[0];
+              return (
+                <button
+                  onClick={snapSelected}
+                  disabled={!prev}
+                  className={`px-2 py-1 border rounded ${!prev ? 'opacity-50' : ''}`}
+                >
+                  On CD
+                </button>
+              );
+            })()}
           </div>
         );
       })()}

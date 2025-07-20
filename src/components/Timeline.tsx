@@ -6,7 +6,7 @@ import type { DataItem, DataGroup } from "vis-timeline";
 // bars (used for cooldown visualization).
 export interface TLItem {
   id: number;
-  group: number; // group id 1-5
+  group: number; // group id 1-7
   start: number; // start time in seconds
   end?: number; // optional end time in seconds
   label: string;
@@ -16,7 +16,8 @@ export interface TLItem {
 
 const groups = [
   "Boss技能",
-  "Buff",
+  "祝福",
+  "青龙之心",
   "Major Cooldown",
   "Minor Cooldown",
   "Major Filler",

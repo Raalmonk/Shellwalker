@@ -151,23 +151,30 @@ export default function App() {
 
   const moveItem = (id: number, start: number, end?: number) => {
     const target = items.find(i => i.id === id);
-    const abilityKey = target?.ability as WWKey | undefined;
+    if (!target) return;
+    const abilityKey = target.ability as WWKey | undefined;
     const notReady = abilityKey ? isOnCD(abilityKey, start, id) : false;
-    setItems(items => items.map(it => {
-      if (it.id !== id) return it;
-      let cls = (it.className || '').replace('warning', '').trim();
-      if (notReady) cls = (cls + ' warning').trim();
-      return { ...it, start, end, className: cls };
-    }));
+    let cls = (target.className || '').replace('warning', '').trim();
+    if (notReady) cls = (cls + ' warning').trim();
+    const newItem = { ...target, start, end, className: cls };
+    setItems(items => [
+      ...items.filter(it => it.id !== id),
+      newItem,
+    ]);
     const hastePct = ratingToHaste(stats.haste);
     setCooldowns(cdObj => {
       const out: Record<string, CDRec[]> = {};
       for (const [k, recs] of Object.entries(cdObj)) {
-        out[k] = recs.map(r => {
-          if (r.id !== id) return r;
-          const dur = r.hasted ? r.base / (1 + hastePct) : r.base;
-          return { ...r, start, end: start + dur };
-        });
+        const rec = recs.find(r => r.id === id);
+        if (!rec) {
+          out[k] = recs;
+          continue;
+        }
+        const dur = rec.hasted ? rec.base / (1 + hastePct) : rec.base;
+        out[k] = [
+          ...recs.filter(r => r.id !== id),
+          { ...rec, start, end: start + dur },
+        ];
       }
       return out;
     });

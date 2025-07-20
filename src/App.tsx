@@ -106,16 +106,16 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 2,
-    SEF: 2,
-    CC: 2,
-    AA: 3,
-    SW: 3,
-    FoF: 4,
-    RSK: 4,
-    WU: 4,
-    TP: 5,
-    BOK: 5,
+    Xuen: 3,
+    SEF: 3,
+    CC: 3,
+    AA: 4,
+    SW: 4,
+    FoF: 5,
+    RSK: 5,
+    WU: 5,
+    TP: 6,
+    BOK: 6,
   };
 
   // handler when an ability button is clicked
@@ -157,10 +157,10 @@ export default function App() {
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 6 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 2 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 6 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 2 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
@@ -170,9 +170,9 @@ export default function App() {
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 6 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 2 } as any);
       setNextBuffId(nextBuffId - 1);
-      extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 6 } as any);
+      extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 2 } as any);
       setNextBuffId(nextBuffId - 2);
     }
 
@@ -245,14 +245,41 @@ export default function App() {
       )
     : [];
 
-  const buffItems: TLItem[] = buffs.map(b => ({
-    id: b.id,
-    group: b.group,
-    start: b.start,
-    end: b.end,
-    label: b.label,
-    className: 'buff',
-  }));
+  const qlBuffs = buffs.filter(b => b.key.endsWith('_BD'));
+  const otherBuffs = buffs.filter(b => !b.key.endsWith('_BD'));
+
+  const qlItems: TLItem[] = (() => {
+    const times = Array.from(new Set(qlBuffs.flatMap(b => [b.start, b.end]))).sort((a, b) => a - b);
+    const res: TLItem[] = [];
+    for (let i = 0; i < times.length - 1; i++) {
+      const s = times[i];
+      const e = times[i + 1];
+      const extra = cdSpeedAt((s + e) / 2) - 1;
+      if (extra > 0) {
+        res.push({
+          id: 10000 + i,
+          group: 2,
+          start: s,
+          end: e,
+          label: `青龙+${extra.toFixed(2)}cd/s`,
+          className: 'buff',
+        });
+      }
+    }
+    return res;
+  })();
+
+  const buffItems: TLItem[] = [
+    ...qlItems,
+    ...otherBuffs.map(b => ({
+      id: b.id,
+      group: b.group,
+      start: b.start,
+      end: b.end,
+      label: b.label,
+      className: 'buff',
+    })),
+  ];
 
   const moveItem = (id: number, start: number, end?: number) => {
     const target = items.find(i => i.id === id);

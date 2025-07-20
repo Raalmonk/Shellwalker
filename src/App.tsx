@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
-import { ratingToHaste } from './lib/haste';
 import TPIcon from './Pics/TP.jpg';
 
 export default function App() {
@@ -18,6 +17,12 @@ export default function App() {
   // cooldown records for each ability
   const [cooldowns, setCooldowns] = useState<Record<string, {start:number; end:number}[]>>({});
   const [showCD, setShowCD] = useState(false);
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
 
   useEffect(() => {
@@ -58,7 +63,7 @@ export default function App() {
     const group = groupMap[key];
     setItems(it => [...it, { id: it.length + 1, group, start: now, label }]);
     const baseCd = ability.cooldown ?? 0;
-    const hastePct = ratingToHaste(stats.haste);
+    const hastePct = stats.haste / 100;
     const finalCd = ['RSK','FoF','WU'].includes(key)
       ? baseCd / (1 + hastePct)
       : baseCd;
@@ -84,7 +89,10 @@ export default function App() {
     const cds = (cooldowns[key] || []).filter(cd => cd.end > time);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (cds.length < maxCharges) return 'Ready';
-    const remaining = Math.ceil(Math.min(...cds.map(cd => cd.end)) - time);
+    const remaining = Math.max(
+      0,
+      Math.ceil(Math.min(...cds.map(cd => cd.end)) - time - 1e-6)
+    );
     return `CD ${remaining}s`;
   };
 
@@ -128,9 +136,28 @@ export default function App() {
         {(['crit','haste','versa','mastery'] as const).map(f => (
           <label key={f} className="flex flex-col text-sm">
             {f}
-            <input type="number" value={stats[f]} onChange={e=>update(f, +e.target.value)} className="text-black" />
+            <input
+              type="number"
+              step="0.1"
+              value={stats[f]}
+              onChange={e => update(f, +e.target.value)}
+              className="text-black"
+            />
           </label>
         ))}
+      </div>
+
+      <div className="space-y-1 text-sm">
+        <div>Haste: {stats.haste}% ({(stats.haste / 100).toFixed(2)})</div>
+        <div>
+          SEF Charges:
+          {Math.max(
+            0,
+            (abilities.SEF.charges ?? 2) -
+              (cooldowns['SEF'] || []).filter(cd => cd.end > time).length
+          )}
+        </div>
+        <div>时间: {formatTime(time)}</div>
       </div>
 
 

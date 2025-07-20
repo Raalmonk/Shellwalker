@@ -16,7 +16,9 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [duration, setDuration] = useState(45);
   // cooldown records for each ability
-  const [cooldowns, setCooldowns] = useState<Record<string, {start:number; end:number}[]>>({});
+  interface CDRec { id:number; start:number; base:number; hasted:boolean; end:number; }
+  const [cooldowns, setCooldowns] = useState<Record<string, CDRec[]>>({});
+  const [nextId, setNextId] = useState(1);
   const [showCD, setShowCD] = useState(false);
 
   const formatTime = (sec: number) => {
@@ -32,6 +34,21 @@ export default function App() {
   }, [theme]);
 
   const abilities = wwData(stats.haste);
+
+  // recalc cooldown end times when haste rating changes
+  useEffect(() => {
+    const hastePct = ratingToHaste(stats.haste);
+    setCooldowns(cdObj => {
+      const out: Record<string, CDRec[]> = {};
+      for (const [k, recs] of Object.entries(cdObj)) {
+        out[k] = recs.map(r => {
+          const dur = r.hasted ? r.base / (1 + hastePct) : r.base;
+          return { ...r, end: r.start + dur };
+        });
+      }
+      return out;
+    });
+  }, [stats.haste]);
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
@@ -63,7 +80,9 @@ export default function App() {
       ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
       : ability.name;
     const group = groupMap[key];
-    setItems(it => [...it, { id: it.length + 1, group, start: now, label }]);
+    const id = nextId;
+    setNextId(id + 1);
+    setItems(it => [...it, { id, group, start: now, label, ability: key }]);
     const baseCd = ability.cooldown ?? 0;
     const hastePct = ratingToHaste(stats.haste);
     const finalCd = ['RSK','FoF','WU'].includes(key)
@@ -72,7 +91,7 @@ export default function App() {
     // store cooldown range so it can be visualised later
     setCooldowns(cdObj => ({
       ...cdObj,
-      [key]: [...cds, { start: now, end: now + finalCd }],
+      [key]: [...cds, { id, start: now, base: baseCd, hasted: ['RSK','FoF','WU'].includes(key), end: now + finalCd }],
     }));
     setTime(now + 1);
   };
@@ -88,7 +107,7 @@ export default function App() {
   // helper to show remaining cooldown next to each ability button
   const cdLabel = (key: WWKey) => {
     const ability = abilities[key];
-    const cds = (cooldowns[key] || []).filter(cd => cd.end > time);
+    const cds = (cooldowns[key] || []).filter(cd => cd.start <= time && cd.end > time);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (cds.length < maxCharges) return 'Ready';
     const remaining = Math.max(
@@ -111,6 +130,42 @@ export default function App() {
         }))
       )
     : [];
+
+  const moveItem = (id: number, start: number, end?: number) => {
+    setItems(items => items.map(it => it.id === id ? { ...it, start, end } : it));
+    const hastePct = ratingToHaste(stats.haste);
+    setCooldowns(cdObj => {
+      const out: Record<string, CDRec[]> = {};
+      for (const [k, recs] of Object.entries(cdObj)) {
+        out[k] = recs.map(r => {
+          if (r.id !== id) return r;
+          const dur = r.hasted ? r.base / (1 + hastePct) : r.base;
+          return { ...r, start, end: start + dur };
+        });
+      }
+      return out;
+    });
+  };
+
+  const contextItem = (id: number) => {
+    setItems(items => {
+      const it = items.find(i => i.id === id);
+      if (!it) return items;
+      if (it.className === 'highlight') {
+        // delete item
+        setCooldowns(cdObj => {
+          const out: Record<string, CDRec[]> = {};
+          for (const [k, recs] of Object.entries(cdObj)) {
+            out[k] = recs.filter(r => r.id !== id);
+          }
+          return out;
+        });
+        return items.filter(i => i.id !== id);
+      } else {
+        return items.map(i => i.id === id ? { ...i, className: 'highlight' } : i);
+      }
+    });
+  };
 
   const update = (field: string, value: number) =>
     setStats(s => ({ ...s, [field]: value }));
@@ -156,7 +211,7 @@ export default function App() {
           {Math.max(
             0,
             (abilities.SEF.charges ?? 2) -
-              (cooldowns['SEF'] || []).filter(cd => cd.end > time).length
+              (cooldowns['SEF'] || []).filter(cd => cd.start <= time && cd.end > time).length
           )}
         </div>
         <div>时间: {formatTime(time)}</div>
@@ -188,6 +243,8 @@ export default function App() {
         cds={cdLines}
         showCD={showCD}
         onCursorChange={setTime}
+        onItemMove={moveItem}
+        onItemContext={contextItem}
       />
     </div>
   );

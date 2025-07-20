@@ -10,6 +10,7 @@ export interface TLItem {
   start: number;     // start time in seconds
   end?: number;      // optional end time in seconds
   label: string;
+  ability?: string;  // ability key, used for editing
   className?: string;
 }
 
@@ -30,9 +31,13 @@ interface Props {
   showCD: boolean;
   // notify parent when the cursor (blue line) moves
   onCursorChange?: (t: number) => void;
+  // item moved by dragging
+  onItemMove?: (id: number, start: number, end?: number) => void;
+  // right click on item
+  onItemContext?: (id: number) => void;
 }
 
-export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange }: Props) => {
+export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange, onItemMove, onItemContext }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<VisTimeline | null>(null);
   const groupDS = useRef(new DataSet<DataGroup>(
@@ -56,6 +61,15 @@ export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange 
         height: '240px',
         start: new Date(0),
         end: new Date(duration * 1000),
+        editable: { updateTime: true },
+        onMove: (item: any, callback: (item: any) => void) => {
+          onItemMove?.(
+            item.id as number,
+            item.start.valueOf() / 1000,
+            item.end ? item.end.valueOf() / 1000 : undefined
+          );
+          callback(item);
+        },
         format: {
           minorLabels: (date: any) => {
             const sec = Math.floor(date.valueOf() / 1000);
@@ -68,6 +82,12 @@ export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange 
       }
     );
     timelineRef.current = tl;
+    tl.on('contextmenu', props => {
+      if (props.item) {
+        props.event.preventDefault();
+        onItemContext?.(props.item as number);
+      }
+    });
     // allow dragging the custom time and clicking to change it
     tl.on('timechanged', props => {
       if (props.id === 'cursor' && onCursorChange) {
@@ -80,7 +100,7 @@ export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange 
         onCursorChange?.(props.time.valueOf() / 1000);
       }
     });
-  }, [onCursorChange]);
+  }, [onCursorChange, onItemMove, onItemContext]);
 
   useEffect(() => {
     timelineRef.current?.setWindow(new Date(0), new Date(duration * 1000));

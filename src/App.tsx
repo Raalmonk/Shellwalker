@@ -2,8 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
-import { computeCooldownEnd } from './lib/computeCooldown';
+import { cdEnd } from './lib/cooldown';
 import TPIcon from './Pics/TP.jpg';
+
+export interface BuffRec { key: string; start: number; end: number }
+
+export function cdSpeedAt(t: number, buffs: BuffRec[] = []): number {
+  const list = buffs.filter(b => t >= b.start && t < b.end).map(b => b.key);
+  const hasAA = list.includes('AA_BD');
+  const hasSW = list.includes('SW_BD');
+  const hasCC = list.includes('CC_BD');
+  let extraSpd = 0;
+  if (hasCC) extraSpd += 1.5;
+  else if (hasAA) extraSpd += 0.75;
+  if (hasSW) extraSpd += 0.75;
+  if (hasSW && (hasAA || hasCC)) extraSpd *= 1.75;
+  return 1 + extraSpd;
+}
+
+export function hasteAt(
+  t: number,
+  buffs: BuffRec[] = [],
+  hasteRating = 0,
+): number {
+  const blessingStacks = buffs.filter(
+    b => b.key === 'Blessing' && t >= b.start && t < b.end,
+  ).length;
+  const blessMult = Math.pow(1.15, blessingStacks);
+  return (1 + ratingToHaste(hasteRating)) * blessMult - 1;
+}
 
 export default function App() {
   const [stats, setStats] = useState({
@@ -44,24 +71,6 @@ export default function App() {
   const buffsAt = (t: number, extra: Buff[] = []) =>
     [...buffs, ...extra].filter(b => t >= b.start && t < b.end);
 
-  const blessingMult = (t: number, extra: Buff[] = []) =>
-    Math.pow(1.15, buffsAt(t, extra).filter(b => b.key === 'Blessing').length);
-
-  const hasteAt = (t: number, extra: Buff[] = []) =>
-    (1 + ratingToHaste(stats.haste)) * blessingMult(t, extra) - 1;
-
-  const cdSpeedAt = (t: number, extra: Buff[] = []) => {
-    const list = buffsAt(t, extra).map(b => b.key);
-    const hasAA = list.includes('AA_BD');
-    const hasSW = list.includes('SW_BD');
-    const hasCC = list.includes('CC_BD');
-    let extraSpd = 0;
-    if (hasCC) extraSpd += 1.5;
-    else if (hasAA) extraSpd += 0.75;
-    if (hasSW) extraSpd += 0.75;
-    if (hasSW && (hasAA || hasCC)) extraSpd *= 1.75;
-    return 1 + extraSpd;
-  };
 
   const fofModAt = (t: number, extra: Buff[] = []) => {
     const list = buffsAt(t, extra).map(b => b.key);
@@ -194,10 +203,13 @@ export default function App() {
     }
 
     const baseCd = ability.cooldown ?? 0;
-    const futureBuffs = [...extraBuffs];
-    const endAt = computeCooldownEnd(now, baseCd, futureBuffs, t =>
-      cdSpeedAt(t, futureBuffs)
-    );
+    const pendingBuffs = [...buffs, ...extraBuffs];
+    const speedAt = (t: number, b: Buff[]) => {
+      const h = 1 + hasteAt(t, b, stats.haste);
+      const s = cdSpeedAt(t, b);
+      return ['RSK', 'FoF', 'WU'].includes(key) ? s * h : s;
+    };
+    const endAt = cdEnd(now, baseCd, pendingBuffs, speedAt);
     // store cooldown range so it can be visualised later
     setCooldowns(cdObj => ({
       ...cdObj,
@@ -262,7 +274,7 @@ export default function App() {
     for (let i = 0; i < times.length - 1; i++) {
       const s = times[i];
       const e = times[i + 1];
-      const extra = cdSpeedAt((s + e) / 2) - 1;
+      const extra = cdSpeedAt((s + e) / 2, buffs) - 1;
       if (extra > 0) {
         res.push({
           id: 10000 + i,

@@ -22,6 +22,9 @@ export default function App() {
   const [nextId, setNextId] = useState(1);
   const [showCD, setShowCD] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
+  interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; }
+  const [buffs, setBuffs] = useState<Buff[]>([]);
+  const [nextBuffId, setNextBuffId] = useState(-1);
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -36,6 +39,38 @@ export default function App() {
   }, [theme]);
 
   const abilities = wwData(stats.haste);
+
+  const buffsAt = (t: number, extra: Buff[] = []) =>
+    [...buffs, ...extra].filter(b => t >= b.start && t < b.end);
+
+  const blessingMult = (t: number, extra: Buff[] = []) =>
+    Math.pow(1.15, buffsAt(t, extra).filter(b => b.key === 'Blessing').length);
+
+  const hasteAt = (t: number, extra: Buff[] = []) =>
+    (1 + ratingToHaste(stats.haste)) * blessingMult(t, extra) - 1;
+
+  const cdSpeedAt = (t: number, extra: Buff[] = []) => {
+    const list = buffsAt(t, extra).map(b => b.key);
+    const hasAA = list.includes('AA_BD');
+    const hasSW = list.includes('SW_BD');
+    const hasCC = list.includes('CC_BD');
+    let extraSpd = 0;
+    if (hasCC) extraSpd += 1.5;
+    else if (hasAA) extraSpd += 0.75;
+    if (hasSW) extraSpd += 0.75;
+    if (hasSW && (hasAA || hasCC)) extraSpd *= 1.75;
+    return 1 + extraSpd;
+  };
+
+  const fofModAt = (t: number, extra: Buff[] = []) => {
+    const list = buffsAt(t, extra).map(b => b.key);
+    const hasAA = list.includes('AA_BD');
+    const hasSW = list.includes('SW_BD');
+    const hasCC = list.includes('CC_BD');
+    if (hasSW && (hasAA || hasCC)) return 0.25;
+    if (hasAA || hasSW || hasCC) return 0.5;
+    return 1;
+  };
 
   const isOnCD = (key: WWKey, start: number, exclude?: number) => {
     const ability = abilities[key];
@@ -87,7 +122,10 @@ export default function App() {
   const click = (key: WWKey) => {
     const now = time;
     const ability = abilities[key];
-    const castDur = ability.castEff ?? 0;
+    const castDurBase = ability.castEff ?? 0;
+    const castDur = key === 'FoF'
+      ? castDurBase * fofModAt(now)
+      : castDurBase;
     // existing cooldown records for this ability (keep history)
     const cds = cooldowns[key] || [];
     const active = cds.filter(cd => cd.end > now);
@@ -114,14 +152,53 @@ export default function App() {
         start: now,
         end: castDur > 0 ? now + castDur : undefined,
         label,
-        ability: key,
-      },
+      ability: key,
+    },
     ]);
+    const extraBuffs: Buff[] = [];
+    if (key === 'AA') {
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 6 } as any);
+      setNextBuffId(nextBuffId - 1);
+    } else if (key === 'SW') {
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 6 } as any);
+      setNextBuffId(nextBuffId - 1);
+    } else if (key === 'CC') {
+      const start = now + castDur;
+      // convert AA buff if active
+      setBuffs(bs => bs.map(b =>
+        b.key === 'AA_BD' && b.start <= start && start < b.end
+          ? { ...b, end: start }
+          : b
+      ));
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 6 } as any);
+      setNextBuffId(nextBuffId - 1);
+      extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 6 } as any);
+      setNextBuffId(nextBuffId - 2);
+    }
+
+    if (extraBuffs.length) {
+      setBuffs(bs => {
+        let out = [...bs, ...extraBuffs];
+        extraBuffs.forEach(bd => {
+          if (bd.key.endsWith('_BD')) {
+            out = out.map(ob =>
+              ob.key === 'Blessing' && ob.start <= bd.end && bd.end <= ob.end
+                ? { ...ob, end: ob.end + 4 }
+                : ob
+            );
+          }
+        });
+        return out;
+      });
+    }
+
     const baseCd = ability.cooldown ?? 0;
-    const hastePct = ratingToHaste(stats.haste);
+    const futureBuffs = [...extraBuffs];
+    const hastePct = hasteAt(now, futureBuffs);
+    const cdSpd = cdSpeedAt(now, futureBuffs);
     const finalCd = ['RSK','FoF','WU'].includes(key)
-      ? baseCd / (1 + hastePct)
-      : baseCd;
+      ? baseCd / ((1 + hastePct) * cdSpd)
+      : baseCd / cdSpd;
     // store cooldown range so it can be visualised later
     setCooldowns(cdObj => ({
       ...cdObj,
@@ -168,6 +245,15 @@ export default function App() {
       )
     : [];
 
+  const buffItems: TLItem[] = buffs.map(b => ({
+    id: b.id,
+    group: b.group,
+    start: b.start,
+    end: b.end,
+    label: b.label,
+    className: 'buff',
+  }));
+
   const moveItem = (id: number, start: number, end?: number) => {
     const target = items.find(i => i.id === id);
     const abilityKey = target?.ability as WWKey | undefined;
@@ -181,6 +267,8 @@ export default function App() {
       if (notReady || channelling) cls = (cls + ' warning').trim();
       return { ...it, start, end: newEnd, className: cls };
     }));
+    const delta = start - (target?.start || 0);
+    setBuffs(bs => bs.map(b => b.src === id ? { ...b, start: b.start + delta, end: b.end + delta } : b));
     const hastePct = ratingToHaste(stats.haste);
     setCooldowns(cdObj => {
       const out: Record<string, CDRec[]> = {};
@@ -208,6 +296,7 @@ export default function App() {
           }
           return out;
         });
+        setBuffs(bs => bs.filter(b => b.src !== id));
         return items.filter(i => i.id !== id);
       } else {
         return items.map(i => i.id === id ? { ...i, className: 'highlight' } : i);
@@ -344,7 +433,7 @@ export default function App() {
       })()}
 
       <Timeline
-        items={[...items, ...cdBars]}
+        items={[...items, ...buffItems, ...cdBars]}
         start={viewStart}
         end={viewStart + duration}
         cursor={time}

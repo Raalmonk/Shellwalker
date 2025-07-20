@@ -20,6 +20,7 @@ const groups = [
   "Minor Cooldown",
   "Major Filler",
   "Minor Filler",
+  "Buff",
 ];
 
 // Position of a cooldown finishing mark shown as a vertical line

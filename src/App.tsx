@@ -3,6 +3,7 @@ import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
+import { fmtSec } from './util/fmtSec';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
 
@@ -222,7 +223,7 @@ export default function App() {
     const end = maxCharges === 1
       ? Math.max(...cds.map(c => getEndAt(c, buffs)))
       : Math.min(...cds.map(c => getEndAt(c, buffs)));
-    const remaining = +(end - time).toFixed(2);
+    const remaining = fmtSec(end - time);
     return `CD ${remaining}s`;
   };
 

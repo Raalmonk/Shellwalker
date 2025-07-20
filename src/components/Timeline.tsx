@@ -16,13 +16,17 @@ const groups = [
   '踏风技能(4)',
 ];
 
-export const Timeline = ({ items, duration }: { items: TLItem[]; duration: number }) => {
+export interface CDLine { id: string; time: number; }
+
+export const Timeline = ({ items, duration, cursor, cds, showCD }:{ items: TLItem[]; duration: number; cursor:number; cds: CDLine[]; showCD:boolean }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<VisTimeline | null>(null);
   const groupDS = useRef(new DataSet<DataGroup>(
     groups.map((g, i) => ({ id: i + 1, content: g }))
   ));
   const itemDS = useRef(new DataSet<DataItem>());
+  const cursorAdded = useRef(false);
+  const cdIds = useRef<string[]>([]);
 
   useEffect(() => {
     if (!containerRef.current || timelineRef.current) return;
@@ -64,5 +68,30 @@ export const Timeline = ({ items, duration }: { items: TLItem[]; duration: numbe
     );
     timelineRef.current?.setWindow(new Date(0), new Date(duration * 1000));
   }, [items]);
+
+  useEffect(() => {
+    if (!timelineRef.current) return;
+    const tl = timelineRef.current;
+    if (!cursorAdded.current) {
+      tl.addCustomTime(new Date(cursor * 1000), 'cursor');
+      cursorAdded.current = true;
+    } else {
+      tl.setCustomTime(new Date(cursor * 1000), 'cursor');
+    }
+  }, [cursor]);
+
+  useEffect(() => {
+    if (!timelineRef.current) return;
+    const tl = timelineRef.current;
+    cdIds.current.forEach(id => tl.removeCustomTime(id));
+    cdIds.current = [];
+    if (showCD) {
+      cds.forEach(c => {
+        const id = `cd-${c.id}-${Math.random()}`;
+        cdIds.current.push(id);
+        tl.addCustomTime(new Date(c.time * 1000), id);
+      });
+    }
+  }, [cds, showCD]);
   return <div ref={containerRef} />;
 };

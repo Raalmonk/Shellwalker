@@ -13,3 +13,9 @@ body.light {
   background: #fff;
   color: #000;
 }
+
+/* style for cooldown range bars */
+.vis-item.cd-bar {
+  background-color: rgba(0, 128, 255, 0.2);
+  border-color: rgba(0, 128, 255, 0.5);
+}

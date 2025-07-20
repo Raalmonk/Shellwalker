@@ -35,9 +35,11 @@ interface Props {
   onItemMove?: (id: number, start: number, end?: number) => void;
   // right click on item
   onItemContext?: (id: number) => void;
+  // left click on item
+  onItemClick?: (id: number) => void;
 }
 
-export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange, onItemMove, onItemContext }: Props) => {
+export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange, onItemMove, onItemContext, onItemClick }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<VisTimeline | null>(null);
   const groupDS = useRef(new DataSet<DataGroup>(
@@ -95,12 +97,16 @@ export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange,
       }
     });
     tl.on('click', props => {
+      if (props.item) {
+        onItemClick?.(props.item as number);
+        return;
+      }
       if (props.time) {
         tl.setCustomTime(props.time, 'cursor');
         onCursorChange?.(props.time.valueOf() / 1000);
       }
     });
-  }, [onCursorChange, onItemMove, onItemContext]);
+  }, [onCursorChange, onItemMove, onItemContext, onItemClick]);
 
   useEffect(() => {
     timelineRef.current?.setWindow(new Date(0), new Date(duration * 1000));

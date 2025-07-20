@@ -6,7 +6,7 @@ import type { DataItem, DataGroup } from "vis-timeline";
 // bars (used for cooldown visualization).
 export interface TLItem {
   id: number;
-  group: number; // group id 1-4
+  group: number; // group id 1-5
   start: number; // start time in seconds
   end?: number; // optional end time in seconds
   label: string;
@@ -14,7 +14,13 @@ export interface TLItem {
   className?: string;
 }
 
-const groups = ["踏风技能(1)", "踏风技能(2)", "踏风技能(3)", "踏风技能(4)"];
+const groups = [
+  "Boss技能",
+  "Major Cooldown",
+  "Minor Cooldown",
+  "Major Filler",
+  "Minor Filler",
+];
 
 // Position of a cooldown finishing mark shown as a vertical line
 export interface CDLine {

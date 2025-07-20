@@ -15,6 +15,7 @@ export default function App() {
   const [time, setTime] = useState(0);
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [duration, setDuration] = useState(45);
+  const [viewStart, setViewStart] = useState(0);
   // cooldown records for each ability
   interface CDRec { id:number; start:number; base:number; hasted:boolean; end:number; }
   const [cooldowns, setCooldowns] = useState<Record<string, CDRec[]>>({});
@@ -218,7 +219,7 @@ export default function App() {
         <input
           type="range" min={45} max={600}
           value={duration}
-          onChange={e => setDuration(+e.target.value)}
+          onChange={e => { setDuration(+e.target.value); setViewStart(0); }}
           className="w-full"
         />
       </label>
@@ -283,7 +284,7 @@ export default function App() {
               <input
                 type="range"
                 min={0}
-                max={duration}
+                max={viewStart + duration}
                 step={0.1}
                 value={it.start}
                 onChange={e => moveItem(it.id, +e.target.value)}
@@ -318,11 +319,16 @@ export default function App() {
 
       <Timeline
         items={[...items, ...cdBars]}
-        duration={duration}
+        start={viewStart}
+        end={viewStart + duration}
         cursor={time}
         cds={cdLines}
         showCD={showCD}
         onCursorChange={setTime}
+        onRangeChange={(s, e) => {
+          setViewStart(s);
+          setDuration(e - s);
+        }}
         onItemMove={moveItem}
         onItemContext={contextItem}
         onItemClick={selectItem}

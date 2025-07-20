@@ -25,12 +25,15 @@ const groups = [
 export interface CDLine { id: string; time: number; }
 interface Props {
   items: TLItem[];
-  duration: number;
+  start: number;
+  end: number;
   cursor: number;
   cds: CDLine[];
   showCD: boolean;
   // notify parent when the cursor (blue line) moves
   onCursorChange?: (t: number) => void;
+  // window range changed (zoom/pan)
+  onRangeChange?: (start: number, end: number) => void;
   // item moved by dragging
   onItemMove?: (id: number, start: number, end?: number) => void;
   // right click on item
@@ -39,7 +42,7 @@ interface Props {
   onItemClick?: (id: number) => void;
 }
 
-export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange, onItemMove, onItemContext, onItemClick }: Props) => {
+export const Timeline = ({ items, start, end, cursor, cds, showCD, onCursorChange, onRangeChange, onItemMove, onItemContext, onItemClick }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<VisTimeline | null>(null);
   const groupDS = useRef(new DataSet<DataGroup>(
@@ -61,8 +64,8 @@ export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange,
       {
         stack: false,
         height: '240px',
-        start: new Date(0),
-        end: new Date(duration * 1000),
+        start: new Date(start * 1000),
+        end: new Date(end * 1000),
         editable: { updateTime: true },
         onMove: (item: any, callback: (item: any) => void) => {
           onItemMove?.(
@@ -106,11 +109,17 @@ export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange,
         onCursorChange?.(props.time.valueOf() / 1000);
       }
     });
-  }, [onCursorChange, onItemMove, onItemContext, onItemClick]);
+    tl.on('rangechanged', props => {
+      onRangeChange?.(
+        props.start.valueOf() / 1000,
+        props.end.valueOf() / 1000
+      );
+    });
+  }, [onCursorChange, onRangeChange, onItemMove, onItemContext, onItemClick]);
 
   useEffect(() => {
-    timelineRef.current?.setWindow(new Date(0), new Date(duration * 1000));
-  }, [duration]);
+    timelineRef.current?.setWindow(new Date(start * 1000), new Date(end * 1000));
+  }, [start, end]);
 
   useEffect(() => {
     // rebuild dataset whenever items change
@@ -126,7 +135,6 @@ export const Timeline = ({ items, duration, cursor, cds, showCD, onCursorChange,
         className: it.className,
       }))
     );
-    timelineRef.current?.setWindow(new Date(0), new Date(duration * 1000));
   }, [items]);
 
   useEffect(() => {

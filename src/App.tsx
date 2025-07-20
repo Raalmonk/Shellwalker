@@ -67,16 +67,16 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 1,
-    SEF: 1,
-    CC: 1,
-    AA: 2,
-    SW: 2,
-    FoF: 3,
-    RSK: 3,
-    WU: 3,
-    TP: 4,
-    BOK: 4,
+    Xuen: 2,
+    SEF: 2,
+    CC: 2,
+    AA: 3,
+    SW: 3,
+    FoF: 4,
+    RSK: 4,
+    WU: 4,
+    TP: 5,
+    BOK: 5,
   };
 
   // handler when an ability button is clicked
@@ -212,6 +212,7 @@ export default function App() {
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">踏风排轴器</h1>
+      <h1 className="text-xl">Boss时间轴选项</h1>
       <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         className="px-2 py-1 border rounded">
         切换 {theme === 'dark' ? '浅色' : '深色'}

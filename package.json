@@ -3,9 +3,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "mocha build/tests/**/*.js",
-    "lint": "echo lint",
-    "pretest": "tsc -p tsconfig.json --outDir build"
+    "test": "vitest run src/__tests__",
+    "test:mocha": "mocha build/tests/**/*.js",
+    "lint": "echo lint"
   },
   "dependencies": {
     "react": "^19.1.0",
@@ -17,6 +17,7 @@
     "@types/node": "^24.0.15",
     "@vitejs/plugin-react": "^4.6.0",
     "mocha": "^11.7.1",
+    "vitest": "^1.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^7.0.2"

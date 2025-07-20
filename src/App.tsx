@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
+import { computeCooldownEnd } from './lib/computeCooldown';
 import TPIcon from './Pics/TP.jpg';
 
 export default function App() {
@@ -194,15 +195,22 @@ export default function App() {
 
     const baseCd = ability.cooldown ?? 0;
     const futureBuffs = [...extraBuffs];
-    const hastePct = hasteAt(now, futureBuffs);
-    const cdSpd = cdSpeedAt(now, futureBuffs);
-    const finalCd = ['RSK','FoF','WU'].includes(key)
-      ? baseCd / ((1 + hastePct) * cdSpd)
-      : baseCd / cdSpd;
+    const endAt = computeCooldownEnd(now, baseCd, futureBuffs, t =>
+      cdSpeedAt(t, futureBuffs)
+    );
     // store cooldown range so it can be visualised later
     setCooldowns(cdObj => ({
       ...cdObj,
-      [key]: [...cds, { id, start: now, base: baseCd, hasted: ['RSK','FoF','WU'].includes(key), end: now + finalCd }],
+      [key]: [
+        ...cds,
+        {
+          id,
+          start: now,
+          base: baseCd,
+          hasted: false,
+          end: endAt,
+        },
+      ],
     }));
     setTime(now + (castDur > 0 ? castDur : 1));
   };

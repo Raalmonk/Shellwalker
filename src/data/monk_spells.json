@@ -257,7 +257,7 @@
       {}
     ],
     "gcd": 1,
-    "cooldown": 60
+    "cooldown": 30
   },
   {
     "name": "SW",
@@ -266,7 +266,7 @@
       {}
     ],
     "gcd": 1,
-    "cooldown": 40
+    "cooldown": 30
   },
   {
     "name": "WU",
@@ -275,7 +275,7 @@
       {}
     ],
     "gcd": 1,
-    "cooldown": 45
+    "cooldown": 25
   },
   {
     "name": "CC",

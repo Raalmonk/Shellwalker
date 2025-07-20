@@ -69,7 +69,7 @@ export const Timeline = ({ items, start, end, cursor, cds, showCD, onCursorChang
         editable: { updateTime: true },
         onMove: (item: any, callback: (item: any) => void) => {
           onItemMove?.(
-            item.id as number,
+            Number(item.id),
             item.start.valueOf() / 1000,
             item.end ? item.end.valueOf() / 1000 : undefined
           );
@@ -90,7 +90,7 @@ export const Timeline = ({ items, start, end, cursor, cds, showCD, onCursorChang
     tl.on('contextmenu', props => {
       if (props.item) {
         props.event.preventDefault();
-        onItemContext?.(props.item as number);
+        onItemContext?.(Number(props.item));
       }
     });
     // allow dragging the custom time and clicking to change it
@@ -101,7 +101,7 @@ export const Timeline = ({ items, start, end, cursor, cds, showCD, onCursorChang
     });
     tl.on('click', props => {
       if (props.item) {
-        onItemClick?.(props.item as number);
+        onItemClick?.(Number(props.item));
         return;
       }
       if (props.time) {

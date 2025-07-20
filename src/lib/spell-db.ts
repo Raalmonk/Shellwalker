@@ -8,6 +8,7 @@ interface Spell {
   cast?: number;
   power_cost?: { energy?: number; chi?: number };
   cooldown?: number;
+  charges?: number;
   family?: string;
 }
 

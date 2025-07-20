@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
+import { ratingToHaste } from './lib/haste';
 import TPIcon from './Pics/TP.jpg';
 
 export default function App() {
@@ -14,6 +15,8 @@ export default function App() {
   const [time, setTime] = useState(0);
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [duration, setDuration] = useState(45);
+  const [cooldowns, setCooldowns] = useState<Record<string, number[]>>({});
+  const [showCD, setShowCD] = useState(false);
 
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export default function App() {
   const groupMap: Record<WWKey, number> = {
     Xuen: 1,
     SEF: 1,
+    CC: 1,
     AA: 2,
     SW: 2,
     FoF: 3,
@@ -36,14 +40,32 @@ export default function App() {
   };
 
   const click = (key: WWKey) => {
+    const now = time;
     const ability = abilities[key];
+    const cds = (cooldowns[key] || []).filter(end => end > now);
+    const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
+    if (cds.length >= maxCharges) {
+      alert('cd没转好');
+      return;
+    }
     const label = key === 'TP'
       ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
       : ability.name;
     const group = groupMap[key];
-    setItems(it => [...it, { id: it.length + 1, group, start: time, label }]);
-    setTime(t => t + 1);
+    setItems(it => [...it, { id: it.length + 1, group, start: now, label }]);
+    const baseCd = ability.cooldown ?? 0;
+    const hastePct = ratingToHaste(stats.haste);
+    const finalCd = ['RSK','FoF','WU'].includes(key)
+      ? baseCd / (1 + hastePct)
+      : baseCd;
+    setCooldowns(cdObj => ({ ...cdObj, [key]: [...cds, now + finalCd] }));
+    setTime(now + 1);
   };
+
+  const cdLines = Object.entries(cooldowns)
+    .flatMap(([k, ts]) => (ts || [])
+      .filter(t => t > time)
+      .map((t, i) => ({ id: `${k}-${i}`, time: t })));
 
   const update = (field: string, value: number) =>
     setStats(s => ({ ...s, [field]: value }));
@@ -78,6 +100,9 @@ export default function App() {
 
 
       <div className="flex gap-2">
+        <button onClick={() => setShowCD(!showCD)} className="px-2 py-1 border rounded">
+          {showCD ? '隐藏CD' : '显示CD'}
+        </button>
         {Object.keys(abilities).map(k =>
           <button key={k} onClick={()=>click(k as WWKey)}
             className="px-2 py-1 bg-blue-500 text-white rounded">
@@ -89,7 +114,7 @@ export default function App() {
         )}
       </div>
 
-      <Timeline items={items} duration={duration} />
+      <Timeline items={items} duration={duration} cursor={time} cds={cdLines} showCD={showCD} />
     </div>
   );
 }

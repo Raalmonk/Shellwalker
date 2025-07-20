@@ -247,7 +247,8 @@
       {}
     ],
     "gcd": 1,
-    "cooldown": 90
+    "cooldown": 90,
+    "charges": 2
   },
   {
     "name": "AA",
@@ -275,5 +276,14 @@
     ],
     "gcd": 1,
     "cooldown": 45
+  },
+  {
+    "name": "CC",
+    "id": 999999,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 90
   }
 ]

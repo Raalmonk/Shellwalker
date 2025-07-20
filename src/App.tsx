@@ -37,17 +37,38 @@ export default function App() {
 
   const abilities = wwData(stats.haste);
 
-  const isOnCD = (key: WWKey, start: number, exclude?: number) => {
+  const addItemAt = (key: WWKey, when: number): number | null => {
     const ability = abilities[key];
-    const cds = (cooldowns[key] || []).filter(cd => cd.id !== exclude);
+    const cds = cooldowns[key] || [];
+    const active = cds.filter(cd => cd.end > when);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
+    if (active.length >= maxCharges) {
+      alert('cd没转好');
+      return null;
+    }
+    const label = key === 'TP'
+      ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
+      : ability.name;
+    const group = groupMap[key];
+    const id = nextId;
+    setNextId(id + 1);
+    setItems(it => [...it, { id, group, start: when, label, ability: key }]);
+    const baseCd = ability.cooldown ?? 0;
     const hastePct = ratingToHaste(stats.haste);
-    const dur = ['RSK', 'FoF', 'WU'].includes(key)
-      ? (ability.cooldown ?? 0) / (1 + hastePct)
-      : ability.cooldown ?? 0;
-    const end = start + dur;
-    const overlaps = cds.filter(cd => start < cd.end && end > cd.start);
-    return overlaps.length >= maxCharges;
+    const finalCd = ['RSK','FoF','WU'].includes(key)
+      ? baseCd / (1 + hastePct)
+      : baseCd;
+    setCooldowns(cdObj => ({
+      ...cdObj,
+      [key]: [...(cdObj[key] || []), {
+        id,
+        start: when,
+        base: baseCd,
+        hasted: ['RSK','FoF','WU'].includes(key),
+        end: when + finalCd,
+      }],
+    }));
+    return id;
   };
 
   // recalc cooldown end times when haste rating changes
@@ -81,34 +102,8 @@ export default function App() {
 
   // handler when an ability button is clicked
   const click = (key: WWKey) => {
-    const now = time;
-    const ability = abilities[key];
-    // existing cooldown records for this ability (keep history)
-    const cds = cooldowns[key] || [];
-    const active = cds.filter(cd => cd.end > now);
-    const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
-    if (active.length >= maxCharges) {
-      alert('cd没转好');
-      return;
-    }
-    const label = key === 'TP'
-      ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
-      : ability.name;
-    const group = groupMap[key];
-    const id = nextId;
-    setNextId(id + 1);
-    setItems(it => [...it, { id, group, start: now, label, ability: key }]);
-    const baseCd = ability.cooldown ?? 0;
-    const hastePct = ratingToHaste(stats.haste);
-    const finalCd = ['RSK','FoF','WU'].includes(key)
-      ? baseCd / (1 + hastePct)
-      : baseCd;
-    // store cooldown range so it can be visualised later
-    setCooldowns(cdObj => ({
-      ...cdObj,
-      [key]: [...cds, { id, start: now, base: baseCd, hasted: ['RSK','FoF','WU'].includes(key), end: now + finalCd }],
-    }));
-    setTime(now + 1);
+    const id = addItemAt(key, time);
+    if (id != null) setTime(time + 1);
   };
 
   // vertical lines showing when a cooldown finishes
@@ -149,28 +144,21 @@ export default function App() {
       )
     : [];
 
-  const moveItem = (id: number, start: number, end?: number) => {
+  const moveItem = (id: number, start: number, _end?: number) => {
     const target = items.find(i => i.id === id);
-    const abilityKey = target?.ability as WWKey | undefined;
-    const notReady = abilityKey ? isOnCD(abilityKey, start, id) : false;
-    setItems(items => items.map(it => {
-      if (it.id !== id) return it;
-      let cls = (it.className || '').replace('warning', '').trim();
-      if (notReady) cls = (cls + ' warning').trim();
-      return { ...it, start, end, className: cls };
-    }));
-    const hastePct = ratingToHaste(stats.haste);
+    if (!target || !target.ability) return;
+    const abilityKey = target.ability as WWKey;
+    // delete old item and cooldown record
+    setItems(items => items.filter(it => it.id !== id));
     setCooldowns(cdObj => {
       const out: Record<string, CDRec[]> = {};
       for (const [k, recs] of Object.entries(cdObj)) {
-        out[k] = recs.map(r => {
-          if (r.id !== id) return r;
-          const dur = r.hasted ? r.base / (1 + hastePct) : r.base;
-          return { ...r, start, end: start + dur };
-        });
+        out[k] = recs.filter(r => r.id !== id);
       }
       return out;
     });
+    const newId = addItemAt(abilityKey, start);
+    if (newId != null && selected === id) setSelected(newId);
   };
 
   const contextItem = (id: number) => {

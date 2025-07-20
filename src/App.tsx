@@ -50,6 +50,10 @@ export default function App() {
     return overlaps.length >= maxCharges;
   };
 
+  // check if any channel is active at given time
+  const isChanneling = (start: number, exclude?: number) =>
+    items.some(it => it.id !== exclude && it.end !== undefined && start < it.end && start >= it.start);
+
   // recalc cooldown end times when haste rating changes
   useEffect(() => {
     const hastePct = ratingToHaste(stats.haste);
@@ -83,6 +87,7 @@ export default function App() {
   const click = (key: WWKey) => {
     const now = time;
     const ability = abilities[key];
+    const castDur = ability.castEff ?? 0;
     // existing cooldown records for this ability (keep history)
     const cds = cooldowns[key] || [];
     const active = cds.filter(cd => cd.end > now);
@@ -91,13 +96,27 @@ export default function App() {
       alert('cd没转好');
       return;
     }
+    if (isChanneling(now)) {
+      alert('引导中不能施放其他技能');
+      return;
+    }
     const label = key === 'TP'
       ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
       : ability.name;
     const group = groupMap[key];
     const id = nextId;
     setNextId(id + 1);
-    setItems(it => [...it, { id, group, start: now, label, ability: key }]);
+    setItems(it => [
+      ...it,
+      {
+        id,
+        group,
+        start: now,
+        end: castDur > 0 ? now + castDur : undefined,
+        label,
+        ability: key,
+      },
+    ]);
     const baseCd = ability.cooldown ?? 0;
     const hastePct = ratingToHaste(stats.haste);
     const finalCd = ['RSK','FoF','WU'].includes(key)
@@ -108,7 +127,7 @@ export default function App() {
       ...cdObj,
       [key]: [...cds, { id, start: now, base: baseCd, hasted: ['RSK','FoF','WU'].includes(key), end: now + finalCd }],
     }));
-    setTime(now + 1);
+    setTime(now + (castDur > 0 ? castDur : 1));
   };
 
   // vertical lines showing when a cooldown finishes
@@ -152,12 +171,15 @@ export default function App() {
   const moveItem = (id: number, start: number, end?: number) => {
     const target = items.find(i => i.id === id);
     const abilityKey = target?.ability as WWKey | undefined;
+    const prevDur = target && target.end ? target.end - target.start : 0;
+    const newEnd = end ?? (target && target.end ? start + prevDur : undefined);
     const notReady = abilityKey ? isOnCD(abilityKey, start, id) : false;
+    const channelling = isChanneling(start, id);
     setItems(items => items.map(it => {
       if (it.id !== id) return it;
       let cls = (it.className || '').replace('warning', '').trim();
-      if (notReady) cls = (cls + ' warning').trim();
-      return { ...it, start, end, className: cls };
+      if (notReady || channelling) cls = (cls + ' warning').trim();
+      return { ...it, start, end: newEnd, className: cls };
     }));
     const hastePct = ratingToHaste(stats.haste);
     setCooldowns(cdObj => {

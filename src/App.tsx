@@ -15,7 +15,8 @@ export default function App() {
   const [time, setTime] = useState(0);
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [duration, setDuration] = useState(45);
-  const [cooldowns, setCooldowns] = useState<Record<string, number[]>>({});
+  // cooldown records for each ability
+  const [cooldowns, setCooldowns] = useState<Record<string, {start:number; end:number}[]>>({});
   const [showCD, setShowCD] = useState(false);
 
 
@@ -26,6 +27,7 @@ export default function App() {
 
   const abilities = wwData(stats.haste);
 
+  // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
     Xuen: 1,
     SEF: 1,
@@ -39,10 +41,12 @@ export default function App() {
     BOK: 4,
   };
 
+  // handler when an ability button is clicked
   const click = (key: WWKey) => {
     const now = time;
     const ability = abilities[key];
-    const cds = (cooldowns[key] || []).filter(end => end > now);
+    // remaining cooldown records for this ability
+    const cds = (cooldowns[key] || []).filter(cd => cd.end > now);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (cds.length >= maxCharges) {
       alert('cd没转好');
@@ -58,14 +62,45 @@ export default function App() {
     const finalCd = ['RSK','FoF','WU'].includes(key)
       ? baseCd / (1 + hastePct)
       : baseCd;
-    setCooldowns(cdObj => ({ ...cdObj, [key]: [...cds, now + finalCd] }));
+    // store cooldown range so it can be visualised later
+    setCooldowns(cdObj => ({
+      ...cdObj,
+      [key]: [...cds, { start: now, end: now + finalCd }],
+    }));
     setTime(now + 1);
   };
 
+  // vertical lines showing when a cooldown finishes
   const cdLines = Object.entries(cooldowns)
-    .flatMap(([k, ts]) => (ts || [])
-      .filter(t => t > time)
-      .map((t, i) => ({ id: `${k}-${i}`, time: t })));
+    .flatMap(([k, recs]) =>
+      (recs || [])
+        .filter(cd => cd.end > time)
+        .map((cd, i) => ({ id: `${k}-${i}`, time: cd.end }))
+    );
+
+  // helper to show remaining cooldown next to each ability button
+  const cdLabel = (key: WWKey) => {
+    const ability = abilities[key];
+    const cds = (cooldowns[key] || []).filter(cd => cd.end > time);
+    const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
+    if (cds.length < maxCharges) return 'Ready';
+    const remaining = Math.ceil(Math.min(...cds.map(cd => cd.end)) - time);
+    return `CD ${remaining}s`;
+  };
+
+  // items used to display cooldown ranges on the timeline
+  const cdBars: TLItem[] = showCD
+    ? Object.entries(cooldowns).flatMap(([k, recs]) =>
+        (recs || []).map((cd, i) => ({
+          id: `cd-bar-${k}-${i}`,
+          group: groupMap[k as WWKey],
+          start: cd.start,
+          end: cd.end,
+          label: '',
+          className: 'cd-bar',
+        }))
+      )
+    : [];
 
   const update = (field: string, value: number) =>
     setStats(s => ({ ...s, [field]: value }));
@@ -103,18 +138,28 @@ export default function App() {
         <button onClick={() => setShowCD(!showCD)} className="px-2 py-1 border rounded">
           {showCD ? '隐藏CD' : '显示CD'}
         </button>
-        {Object.keys(abilities).map(k =>
-          <button key={k} onClick={()=>click(k as WWKey)}
-            className="px-2 py-1 bg-blue-500 text-white rounded">
-            {k === 'TP'
-              ? <img src={TPIcon} alt={abilities[k as WWKey].name}
-                  className="w-8 h-8" />
-              : k}
-          </button>
-        )}
+        {Object.keys(abilities).map(k => (
+          <div key={k} className="flex flex-col items-center">
+            <button onClick={() => click(k as WWKey)}
+              className="px-2 py-1 bg-blue-500 text-white rounded">
+              {k === 'TP'
+                ? <img src={TPIcon} alt={abilities[k as WWKey].name}
+                    className="w-8 h-8" />
+                : k}
+            </button>
+            <span className="text-xs">{cdLabel(k as WWKey)}</span>
+          </div>
+        ))}
       </div>
 
-      <Timeline items={items} duration={duration} cursor={time} cds={cdLines} showCD={showCD} />
+      <Timeline
+        items={[...items, ...cdBars]}
+        duration={duration}
+        cursor={time}
+        cds={cdLines}
+        showCD={showCD}
+        onCursorChange={setTime}
+      />
     </div>
   );
 }

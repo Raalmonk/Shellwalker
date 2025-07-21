@@ -4,9 +4,7 @@ import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
 import { buildTimeline } from './lib/simulator';
-import { cdSpeedAt, blessLayersAt } from './lib/speed';
-import { applyMutualExclusion } from './lib/buffs';
-import { BlessIcon } from './components/BlessIcon';
+import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
@@ -145,25 +143,31 @@ export default function App() {
     },
     ]);
     const extraBuffs: Buff[] = [];
-    let buffStart = now;
     if (key === 'AA') {
       extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      buffStart = now + castDur;
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: buffStart, end: buffStart + 8, label: 'SW青龙', src: id, group: 3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
-      buffStart = now + castDur;
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start: buffStart, end: buffStart + 6, label: 'CC青龙', src: id, group: 3 } as any);
+      const start = now + castDur;
+      // convert AA buff if active
+      setBuffs(bs => bs.map(b =>
+        b.key === 'AA_BD' && b.start <= start && start < b.end
+          ? { ...b, end: start }
+          : b
+      ));
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
+      extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 2 } as any);
+      setNextBuffId(nextBuffId - 2);
     }
 
     if (extraBuffs.length) {
       setBuffs(bs => {
-        let out = applyMutualExclusion([...bs, ...extraBuffs], buffStart);
+        let out = [...bs, ...extraBuffs];
         extraBuffs.forEach(bd => {
-          if (bd.key.endsWith('_BD') && out.some(o => o.id === bd.id)) {
+          if (bd.key.endsWith('_BD')) {
             out = out.map(ob =>
               ob.key === 'Blessing' && ob.start <= bd.end && bd.end <= ob.end
                 ? { ...ob, end: ob.end + 4 }
@@ -368,10 +372,6 @@ export default function App() {
           )}
         </div>
         <div>时间: {formatTime(time)}</div>
-      </div>
-
-      <div className="flex gap-2">
-        <BlessIcon layers={blessLayersAt(time, buffs as any)} />
       </div>
 
 

@@ -1,7 +1,7 @@
 export interface Buff {
   start: number;
   end: number;
-  kind: 'AA' | 'CW' | 'CC' | 'BLESS';
+  kind: 'AA' | 'CC' | 'CW' | 'BLESS';
 }
 
 function kindOf(b: any): Buff['kind'] | undefined {
@@ -29,22 +29,18 @@ const count = (t: number, buffs: any[], k: Buff['kind']) =>
 export function cdSpeedAt(t: number, buffs: Buff[]): number {
   const hasCW = active(t, buffs, 'CW');
   const hasCC = active(t, buffs, 'CC');
-  const hasAA = active(t, buffs, 'AA');
-  const stacks = count(t, buffs, 'BLESS');
+  const hasAA = !hasCC && active(t, buffs, 'AA');
 
-  let extraOther = 0;
-  if (hasCC) extraOther = 1.5;
-  else if (hasAA) extraOther = 0.75;
+  const extra = hasCC ? 1.5 : hasAA ? 0.75 : 0;
 
-  let speed = 1;
-
+  let speed = 1 + extra;
   if (hasCW) {
-    speed = extraOther > 0 ? 1 + extraOther * 1.75 : 1 + 0.75;
-  } else {
-    speed = 1 + extraOther;
+    speed = hasAA || hasCC ? 1 + extra * 1.75 : 1 + 0.75;
   }
 
-  if (stacks > 0) speed *= 1.15 * stacks;
+  const dragonStacks = (hasCW ? 1 : 0) + (hasCC ? 1 : 0) + (hasAA ? 1 : 0);
+  const blessStacks = count(t, buffs, 'BLESS') + dragonStacks;
+  if (blessStacks > 0) speed *= Math.pow(1.15, blessStacks);
 
   return speed;
 }

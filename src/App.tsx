@@ -4,24 +4,12 @@ import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
 import { buildTimeline } from './lib/simulator';
+import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
 
 export interface BuffRec { key: string; start: number; end: number }
-
-export function cdSpeedAt(t: number, buffs: BuffRec[] = []): number {
-  const list = buffs.filter(b => t >= b.start && t < b.end).map(b => b.key);
-  const hasAA = list.includes('AA_BD');
-  const hasSW = list.includes('SW_BD');
-  const hasCC = list.includes('CC_BD');
-  let extraSpd = 0;
-  if (hasCC) extraSpd += 1.5;
-  else if (hasAA) extraSpd += 0.75;
-  if (hasSW) extraSpd += 0.75;
-  if (hasSW && (hasAA || hasCC)) extraSpd *= 1.75;
-  return 1 + extraSpd;
-}
 
 export function hasteAt(
   t: number,

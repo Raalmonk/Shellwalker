@@ -3,7 +3,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run src/__tests__ tests/cd.spec.ts",
+    "test": "vitest run src/__tests__ tests/cd.spec.ts tests/speed.spec.ts",
     "test:mocha": "mocha build/tests/**/*.js",
     "lint": "echo lint"
   },

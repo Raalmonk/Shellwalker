@@ -1,7 +1,6 @@
 const assert = require('node:assert/strict');
 const { describe, it } = require('mocha');
-const { BuffManager, fofModAt } = require('../src/combat/azureDragonHeart');
-const { cdSpeedAt } = require('../src/lib/speed');
+const { BuffManager, cdSpeedAt, fofModAt } = require('../src/combat/azureDragonHeart');
 const { AA, SW, CC } = require('../src/combat/skills');
 
 function use(skill: any, time: number, mgr: any) {

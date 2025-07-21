@@ -4,7 +4,9 @@ import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
 import { buildTimeline } from './lib/simulator';
-import { cdSpeedAt } from './lib/speed';
+import { cdSpeedAt, blessLayersAt } from './lib/speed';
+import { applyMutualExclusion } from './lib/buffs';
+import BlessIcon from './components/BlessIcon';
 import { fmt } from './util/fmt';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
@@ -144,23 +146,38 @@ export default function App() {
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 3 } as any);
-      setNextBuffId(nextBuffId - 1);
+      const ccActive = buffs.some(b => b.key === 'CC_BD' && b.start <= now && now < b.end);
+      if (ccActive) {
+        extraBuffs.push({ id: nextBuffId, key: 'Blessing', start: now, end: now + 4, label: '祝福', src: id, group: 2 } as any);
+        setNextBuffId(nextBuffId - 1);
+      } else {
+        extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 3 } as any);
+        setNextBuffId(nextBuffId - 1);
+      }
     } else if (key === 'SW') {
       extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
+      const hasAA = buffs.some(b => b.key === 'AA_BD' && b.start <= start && start < b.end);
       // convert AA buff if active
-      setBuffs(bs => bs.map(b =>
-        b.key === 'AA_BD' && b.start <= start && start < b.end
-          ? { ...b, end: start }
-          : b
-      ));
+      if (hasAA) {
+        setBuffs(bs => bs.map(b =>
+          b.key === 'AA_BD' && b.start <= start && start < b.end
+            ? { ...b, end: start }
+            : b
+        ));
+      }
       extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
-      extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 2 } as any);
-      setNextBuffId(nextBuffId - 2);
+      if (hasAA) {
+        extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 2 } as any);
+        setNextBuffId(nextBuffId - 2);
+      }
+    }
+
+    if (extraBuffs.length) {
+      applyMutualExclusion([...buffs, ...extraBuffs], now);
     }
 
     if (extraBuffs.length) {
@@ -372,6 +389,7 @@ export default function App() {
           )}
         </div>
         <div>时间: {formatTime(time)}</div>
+        <BlessIcon layers={blessLayersAt(time, buffs)} />
       </div>
 
 

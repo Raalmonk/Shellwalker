@@ -5,6 +5,7 @@ import { ratingToHaste } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
 import { buildTimeline } from './lib/simulator';
 import { cdSpeedAt } from './lib/speed';
+import { autoBless } from './lib/bless';
 import { fmt } from './util/fmt';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
@@ -233,12 +234,13 @@ export default function App() {
   const otherBuffs = buffs.filter(b => !b.key.endsWith('_BD'));
 
   const qlItems: TLItem[] = (() => {
+    const list = autoBless(buffs as any);
     const times = Array.from(new Set(qlBuffs.flatMap(b => [b.start, b.end]))).sort((a, b) => a - b);
     const res: TLItem[] = [];
     for (let i = 0; i < times.length - 1; i++) {
       const s = times[i];
       const e = times[i + 1];
-      const extra = cdSpeedAt((s + e) / 2, buffs) - 1;
+      const extra = cdSpeedAt((s + e) / 2, list) - 1;
       if (extra > 0) {
         res.push({
           id: 10000 + i,

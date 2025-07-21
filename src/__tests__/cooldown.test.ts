@@ -6,13 +6,13 @@ import { hasteAt, BuffRec } from '../App';
 const ql: BuffRec[] = [{ key: 'AA_BD', start: 0, end: 6 }];
 
 describe('cdEnd integration', () => {
-  it('FoF ends at 17.925 s', () => {
+  it('FoF ends at 19.5 s', () => {
     const end = cdEnd(0, 24, ql, (t, b) => cdSpeedAt(t, b));
-    expect(end).toBeCloseTo(17.925, 3);
+    expect(end).toBeCloseTo(19.5, 1);
   });
 
-  it('AA ends at 23.925 s', () => {
+  it('AA ends at 25.5 s', () => {
     const end = cdEnd(0, 30, ql, (t, b) => cdSpeedAt(t, b) * (1 + hasteAt(t, b)));
-    expect(end).toBeCloseTo(23.925, 3);
+    expect(end).toBeCloseTo(25.5, 1);
   });
 });

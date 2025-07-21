@@ -1,5 +1,4 @@
-import { BuffManager, AzureDragonHeart, Blessing, fofModAt, hasteMult } from './azureDragonHeart';
-import { cdSpeedAt } from '../lib/speed';
+import { BuffManager, AzureDragonHeart, Blessing, cdSpeedAt, fofModAt, hasteMult } from './azureDragonHeart';
 import { BUFF_DURATION } from '../constants/buffs';
 
 export interface SkillOptions {

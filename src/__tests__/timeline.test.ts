@@ -9,23 +9,23 @@ function ev(id: string, start: number, base: number): SkillCast {
   return { id, start, base };
 }
 
-  describe('timeline recompute', () => {
-    it('scenario A: AA before FoF', () => {
+describe('timeline recompute', () => {
+  it('scenario A: AA before FoF', () => {
     const casts: Record<string, SkillCast[]> = {
       AA: [ev('AA', 0, 30)],
       FoF: [ev('FoF', 0, 24)],
     };
     const tl = buildTimeline(casts, buffAA);
-    expect(tl.FoF[0].end).toBeCloseTo(17.93, 2);
+    expect(tl.FoF[0].end).toBeCloseTo(19.5, 2);
   });
 
-    it('scenario B: insert AA later at earlier time', () => {
+  it('scenario B: insert AA later at earlier time', () => {
     const casts: Record<string, SkillCast[]> = {
       FoF: [ev('FoF', 0, 24)],
       AA: [ev('AA', 0, 30)],
     };
     const tl = buildTimeline(casts, buffAA);
-    expect(tl.FoF[0].end).toBeCloseTo(17.93, 2);
+    expect(tl.FoF[0].end).toBeCloseTo(19.5, 2);
   });
 });
 

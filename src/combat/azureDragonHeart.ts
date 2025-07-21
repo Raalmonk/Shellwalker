@@ -99,18 +99,6 @@ export class BuffManager {
   }
 }
 
-export function cdSpeedAt(manager: BuffManager, time = manager.time) {
-  const list = manager.activeDragons(time).map(b => b.kind);
-  const hasAA = list.includes('AA');
-  const hasSW = list.includes('SW');
-  const hasCC = list.includes('CC');
-  let extra = 0;
-  if (hasCC) extra += CD_SPEED.CC;
-  else if (hasAA) extra += CD_SPEED.AA;
-  if (hasSW) extra += CD_SPEED.SW;
-  if (hasSW && (hasAA || hasCC)) extra *= CD_SPEED.SW_COEXIST;
-  return 1 + extra;
-}
 
 export function fofModAt(manager: BuffManager, time = manager.time) {
   const list = manager.activeDragons(time).map(b => b.kind);

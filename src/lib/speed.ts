@@ -1,6 +1,10 @@
-import { Buff } from './cooldown';
+export interface Buff {
+  start: number;
+  end: number;
+  kind: 'AA' | 'CW' | 'CC' | 'BLESS';
+}
 
-function kindOf(b: any): 'AA' | 'CW' | 'CC' | 'BLESS' | undefined {
+function kindOf(b: any): Buff['kind'] | undefined {
   if (b.kind) return b.kind;
   switch (b.key) {
     case 'AA_BD':
@@ -16,33 +20,33 @@ function kindOf(b: any): 'AA' | 'CW' | 'CC' | 'BLESS' | undefined {
   }
 }
 
-const active = (t: number, buffs: any[], k: 'AA' | 'CW' | 'CC' | 'BLESS') =>
+const active = (t: number, buffs: any[], k: Buff['kind']) =>
   buffs.some(b => kindOf(b) === k && b.start <= t && t < b.end);
 
-const count = (t: number, buffs: any[], k: 'AA' | 'CW' | 'CC' | 'BLESS') =>
+const count = (t: number, buffs: any[], k: Buff['kind']) =>
   buffs.filter(b => kindOf(b) === k && b.start <= t && t < b.end).length;
 
 export function cdSpeedAt(t: number, buffs: Buff[]): number {
-  const aa = active(t, buffs, 'AA');
-  const cw = active(t, buffs, 'CW');
-  const cc = active(t, buffs, 'CC');
+  const hasCW = active(t, buffs, 'CW');
+  const hasCC = active(t, buffs, 'CC');
+  const hasAA = active(t, buffs, 'AA');
+  const stacks = count(t, buffs, 'BLESS');
 
-  let extra = 0;
-  if (cc) extra = 1.5;
-  else if (aa) extra = 0.75;
+  let extraOther = 0;
+  if (hasCC) extraOther = 1.5;
+  else if (hasAA) extraOther = 0.75;
 
-  if (cw) {
-    if (cc) extra = 1.5 * 1.75;
-    else if (aa) extra = 0.75 * 1.75;
-    else extra = 0.75;
+  let speed = 1;
+
+  if (hasCW) {
+    speed = extraOther > 0 ? 1 + extraOther * 1.75 : 1 + 0.75;
+  } else {
+    speed = 1 + extraOther;
   }
 
-  const dragonSpeed = 1 + extra;
+  if (stacks > 0) speed *= 1.15 * stacks;
 
-  const n =
-    count(t, buffs, 'BLESS') + (aa ? 1 : 0) + (cw ? 1 : 0) + (cc ? 1 : 0);
-
-  return dragonSpeed * Math.pow(1.15, n);
+  return speed;
 }
 
 // END_PATCH

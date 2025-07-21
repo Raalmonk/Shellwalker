@@ -27,26 +27,29 @@ const count = (t: number, buffs: any[], k: Buff['kind']) =>
   buffs.filter(b => kindOf(b) === k && b.start <= t && t < b.end).length;
 
 export function cdSpeedAt(t: number, buffs: Buff[]): number {
-  const hasCW = active(t, buffs, 'CW');
-  const hasCC = active(t, buffs, 'CC');
-  const hasAA = active(t, buffs, 'AA');
-  const stacks = count(t, buffs, 'BLESS');
+  const aa = active(t, buffs, 'AA');
+  const cw = active(t, buffs, 'CW');
+  const cc = active(t, buffs, 'CC');
 
-  let extraOther = 0;
-  if (hasCC) extraOther = 1.5;
-  else if (hasAA) extraOther = 0.75;
+  let extra = 0;
+  if (cc) extra = 1.5;
+  else if (aa) extra = 0.75;
 
-  let speed = 1;
-
-  if (hasCW) {
-    speed = extraOther > 0 ? 1 + extraOther * 1.75 : 1 + 0.75;
-  } else {
-    speed = 1 + extraOther;
+  if (cw) {
+    if (cc) extra = 1.5 * 1.75;
+    else if (aa) extra = 0.75 * 1.75;
+    else extra = 0.75;
   }
 
-  if (stacks > 0) speed *= 1.15 * stacks;
+  const dragonSpeed = 1 + extra;
 
-  return speed;
+  const n =
+    count(t, buffs, 'BLESS') +
+    (aa ? 1 : 0) +
+    (cw ? 1 : 0) +
+    (cc ? 1 : 0);
+
+  return dragonSpeed * Math.pow(1.15, n);
 }
 
 // END_PATCH

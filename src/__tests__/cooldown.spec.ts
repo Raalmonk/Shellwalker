@@ -8,7 +8,7 @@ describe('cooldown lazy compute', () => {
     const buffs: Buff[] = [{ start: 0, end: 6, key: 'AA_BD' } as any];
     const fof: SkillCast = { id: 'FoF', start: 0, base: 24 };
     const aa: SkillCast  = { id: 'AA',  start: 0, base: 30 };
-    expect(getEndAt(fof, buffs)).toBeCloseTo(19.50, 2);
-    expect(getEndAt(aa, buffs)).toBeCloseTo(25.50, 2);
+    expect(getEndAt(fof, buffs)).toBeCloseTo(17.93, 2);
+    expect(getEndAt(aa, buffs)).toBeCloseTo(23.93, 2);
   });
 });

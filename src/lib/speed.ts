@@ -26,30 +26,26 @@ const active = (t: number, buffs: any[], k: Buff['kind']) =>
 const count = (t: number, buffs: any[], k: Buff['kind']) =>
   buffs.filter(b => kindOf(b) === k && b.start <= t && t < b.end).length;
 
-export function blessLayersAt(t: number, buffs: Buff[]): number {
-  const cw = active(t, buffs, 'CW') ? 1 : 0;
-  const cc = active(t, buffs, 'CC');
-  const aa = active(t, buffs, 'AA');
-  const bless = count(t, buffs, 'BLESS');
-  return bless + cw + (cc ? 1 : aa ? 1 : 0);
-}
-
 export function cdSpeedAt(t: number, buffs: Buff[]): number {
-  const cw = active(t, buffs, 'CW');
-  const cc = active(t, buffs, 'CC');
-  const aa = active(t, buffs, 'AA');
+  const hasCW = active(t, buffs, 'CW');
+  const hasCC = active(t, buffs, 'CC');
+  const hasAA = active(t, buffs, 'AA');
+  const stacks = count(t, buffs, 'BLESS');
 
-  let extra = 0;
-  if (cc) extra = 1.5;
-  else if (aa) extra = 0.75;
+  let extraOther = 0;
+  if (hasCC) extraOther = 1.5;
+  else if (hasAA) extraOther = 0.75;
 
-  if (cw) {
-    if (extra) extra *= 1.75;
-    else extra = 0.75;
+  let speed = 1;
+
+  if (hasCW) {
+    speed = extraOther > 0 ? 1 + extraOther * 1.75 : 1 + 0.75;
+  } else {
+    speed = 1 + extraOther;
   }
 
-  let speed = 1 + extra;
-  speed *= Math.pow(1.15, blessLayersAt(t, buffs));
+  if (stacks > 0) speed *= 1.15 * stacks;
+
   return speed;
 }
 

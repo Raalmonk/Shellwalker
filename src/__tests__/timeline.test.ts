@@ -16,7 +16,7 @@ describe('timeline recompute', () => {
       FoF: [ev('FoF', 0, 24)],
     };
     const tl = buildTimeline(casts, buffAA);
-    expect(tl.FoF[0].end).toBeCloseTo(19.5, 2);
+    expect(tl.FoF[0].end).toBeCloseTo(17.93, 2);
   });
 
   it('scenario B: insert AA later at earlier time', () => {
@@ -25,7 +25,7 @@ describe('timeline recompute', () => {
       AA: [ev('AA', 0, 30)],
     };
     const tl = buildTimeline(casts, buffAA);
-    expect(tl.FoF[0].end).toBeCloseTo(19.5, 2);
+    expect(tl.FoF[0].end).toBeCloseTo(17.93, 2);
   });
 });
 

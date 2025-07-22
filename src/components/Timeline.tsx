@@ -14,16 +14,20 @@ export interface TLItem {
   ability?: string; // ability key, used for editing
   className?: string;
   pendingDelete?: boolean;
+  type?: string;
 }
 
+import { t } from '../i18n/en';
+import { GUIDE_COLOR } from '../constants/colors';
+
 const groups = [
-  "Boss技能",
-  "祝福",
-  "青龙之心",
-  "Major Cooldown",
-  "Minor Cooldown",
-  "Major Filler",
-  "Minor Filler",
+  t('Boss技能'),
+  t('祝福'),
+  t('青龙之心'),
+  'Major Cooldown',
+  'Minor Cooldown',
+  'Major Filler',
+  'Minor Filler',
 ];
 
 // Position of a cooldown finishing mark shown as a vertical line
@@ -184,7 +188,8 @@ export const Timeline = ({
         start: new Date(it.start * 1000),
         end: it.end ? new Date(it.end * 1000) : undefined,
         type: it.end ? "range" : "box",
-        className: it.className,
+        className: [it.className, it.type === 'guide' ? 'event-guide' : ''].filter(Boolean).join(' '),
+        style: it.type === 'guide' ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#fff` : undefined,
       })),
     );
   }, [items]);

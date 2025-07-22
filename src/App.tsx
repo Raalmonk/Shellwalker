@@ -10,6 +10,9 @@ import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
+import { AbilityIcon } from './components/AbilityIcon';
+import { ABILITY_ICON_MAP } from './constants/icons';
+import { t } from './i18n/en';
 
 export interface BuffRec { key: string; start: number; end: number }
 
@@ -116,15 +119,16 @@ export default function App() {
     const active = cds.filter(cd => getEndAt(cd, buffs) > now);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (active.length >= maxCharges) {
-      alert('cd没转好');
+      alert(t('cd没转好'));
       return;
     }
     if (isChanneling(now)) {
-      alert('引导中不能施放其他技能');
+      alert(t('引导中不能施放其他技能'));
       return;
     }
-    const label = key === 'TP'
-      ? `<img src="${TPIcon}" alt="${ability.name}" style="width:20px;height:20px"/>`
+    const icon = ABILITY_ICON_MAP[key];
+    const label = icon
+      ? `<img src="${icon.src}" alt="${ability.name}" style="width:20px;height:20px"/>`
       : ability.name;
     const group = groupMap[key];
     const id = nextId;
@@ -139,14 +143,15 @@ export default function App() {
         label,
         ability: key,
         pendingDelete: false,
+        type: castDur > 0 ? 'guide' : undefined,
       },
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: 'AA青龙', src: id, group: 3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: 'SW青龙', src: id, group: 3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
@@ -156,7 +161,7 @@ export default function App() {
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
     }
 
@@ -232,7 +237,7 @@ export default function App() {
           group: 3,
           start: s,
           end: e,
-          label: `青龙+${extra.toFixed(2)}cd/s`,
+          label: `${t('青龙')}+${extra.toFixed(2)}cd/s`,
           className: 'buff',
         });
       }
@@ -336,15 +341,15 @@ export default function App() {
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-xl font-bold">踏风排轴器</h1>
-      <h1 className="text-xl">Boss时间轴选项</h1>
+      <h1 className="text-xl font-bold">{t('踏风排轴器')}</h1>
+      <h1 className="text-xl">{t('Boss时间轴选项')}</h1>
       <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         className="px-2 py-1 border rounded">
-        切换 {theme === 'dark' ? '浅色' : '深色'}
+        {t('切换')} {theme === 'dark' ? t('浅色') : t('深色')}
       </button>
 
       <label className="block">
-        查看时间范围 {duration}s
+        {t('查看时间范围')} {duration}s
         <input
           type="range" min={45} max={600}
           value={duration}
@@ -379,22 +384,21 @@ export default function App() {
               (casts['SEF'] || []).filter(c => c.start <= time && getEndAt(c, buffs) > time).length
           )}
         </div>
-        <div>时间: {formatTime(time)}</div>
+        <div>{t('时间')}: {formatTime(time)}</div>
       </div>
 
 
       <div className="flex gap-2">
         <button onClick={() => setShowCD(!showCD)} className="px-2 py-1 border rounded">
-          {showCD ? '隐藏CD' : '显示CD'}
+          {showCD ? t('隐藏CD') : t('显示CD')}
         </button>
         {Object.keys(abilities).map(k => (
-          <div key={k} className="flex flex-col items-center">
+          <div key={k} className="flex flex-col items-center w-8 h-8">
             <button onClick={() => click(k as WWKey)}
-              className="px-2 py-1 bg-blue-500 text-white rounded">
+              className="w-8 h-8 bg-blue-500 text-white rounded relative overflow-hidden">
               {k === 'TP'
-                ? <img src={TPIcon} alt={abilities[k as WWKey].name}
-                    className="w-8 h-8" />
-                : k}
+                ? <img src={TPIcon} alt={abilities[k as WWKey].name} className="w-full h-full" />
+                : <AbilityIcon abilityKey={k} />}
             </button>
             <span className="text-xs">{cdLabel(k as WWKey)}</span>
           </div>
@@ -410,7 +414,7 @@ export default function App() {
           <div className="border p-2 space-y-1 text-sm">
             <div>{abilities[it.ability as WWKey].name}</div>
             <label className="block">
-              释放时间
+              {t('释放时间')}
               <input
                 type="range"
                 min={0}
@@ -428,7 +432,7 @@ export default function App() {
                 className="ml-2 w-20 text-black"
               />
             </label>
-            <div>转好时间: {formatTime(endAt)}</div>
+            <div>{t('转好时间')}: {formatTime(endAt)}</div>
             {(() => {
               const prev = (casts[it.ability ?? ''] || [])
                 .filter(c => c.id !== selected && c.start < it.start)

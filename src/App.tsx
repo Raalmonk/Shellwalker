@@ -128,7 +128,7 @@ export default function App() {
     }
     const icon = ABILITY_ICON_MAP[key];
     const label = icon
-      ? `<img src="${icon.src}" alt="${ability.name}" style="width:20px;height:20px"/>`
+      ? `<img src="${icon.src}" alt="${ability.name}" style="width:10px;height:10px"/>`
       : ability.name;
     const group = groupMap[key];
     const id = nextId;
@@ -393,9 +393,9 @@ export default function App() {
           {showCD ? t('隐藏CD') : t('显示CD')}
         </button>
         {Object.keys(abilities).map(k => (
-          <div key={k} className="flex flex-col items-center w-8 h-8">
+          <div key={k} className="flex flex-col items-center w-4 h-4">
             <button onClick={() => click(k as WWKey)}
-              className="w-8 h-8 bg-blue-500 text-white rounded relative overflow-hidden">
+              className="w-4 h-4 bg-blue-500 text-white rounded relative overflow-hidden">
               {k === 'TP'
                 ? <img src={TPIcon} alt={abilities[k as WWKey].name} className="w-full h-full" />
                 : <AbilityIcon abilityKey={k} />}

@@ -1,7 +1,7 @@
 export interface Buff {
   start: number;
   end: number;
-  kind: 'AA' | 'CW' | 'CC' | 'BLESS';
+  kind: 'AA' | 'CW' | 'CC';
 }
 
 function kindOf(b: any): Buff['kind'] | undefined {
@@ -13,8 +13,6 @@ function kindOf(b: any): Buff['kind'] | undefined {
       return 'CW';
     case 'CC_BD':
       return 'CC';
-    case 'Blessing':
-      return 'BLESS';
     default:
       return undefined;
   }
@@ -23,30 +21,37 @@ function kindOf(b: any): Buff['kind'] | undefined {
 const active = (t: number, buffs: any[], k: Buff['kind']) =>
   buffs.some(b => kindOf(b) === k && b.start <= t && t < b.end);
 
-const count = (t: number, buffs: any[], k: Buff['kind']) =>
-  buffs.filter(b => kindOf(b) === k && b.start <= t && t < b.end).length;
-
+/**
+ * 计算当前时间 t 下，所有 Buff 对 CD 的加速倍数
+ * 规则：
+ *   - 基础 speed = 1
+ *   - aaActive = buffs 中有 kind==='AA'
+ *   - ccActive = buffs 中有 kind==='CC'
+ *   - cwActive = buffs 中有 kind==='CW'
+ *   - 若 ccActive 且 aaActive，忽略 AA（AA 被 CC 覆盖）
+ *   - extra = 0
+ *   - if (cwActive && ccActive) extra = 1.5 * 1.75
+ *   - else if (cwActive && aaActive) extra = 0.75 * 1.75
+ *   - else if (ccActive)                extra = 1.5
+ *   - else if (aaActive || cwActive)    extra = 0.75
+ *   - speed = 1 + extra
+ *   - return speed
+ */
 export function cdSpeedAt(t: number, buffs: Buff[]): number {
-  const hasCW = active(t, buffs, 'CW');
-  const hasCC = active(t, buffs, 'CC');
-  const hasAA = active(t, buffs, 'AA');
-  const stacks = count(t, buffs, 'BLESS');
+  const aaActive = active(t, buffs, 'AA');
+  const ccActive = active(t, buffs, 'CC');
+  const cwActive = active(t, buffs, 'CW');
 
-  let extraOther = 0;
-  if (hasCC) extraOther = 1.5;
-  else if (hasAA) extraOther = 0.75;
+  // CC overrides AA when both present
+  const aa = ccActive ? false : aaActive;
 
-  let speed = 1;
+  let extra = 0;
+  if (cwActive && ccActive) extra = 1.5 * 1.75;
+  else if (cwActive && aa) extra = 0.75 * 1.75;
+  else if (ccActive) extra = 1.5;
+  else if (aa || cwActive) extra = 0.75;
 
-  if (hasCW) {
-    speed = extraOther > 0 ? 1 + extraOther * 1.75 : 1 + 0.75;
-  } else {
-    speed = 1 + extraOther;
-  }
-
-  if (stacks > 0) speed *= 1.15 * stacks;
-
-  return speed;
+  return 1 + extra;
 }
 
 // END_PATCH

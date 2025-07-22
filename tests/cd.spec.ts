@@ -19,13 +19,4 @@ describe('cooldown integration', () => {
     const fof: SkillCast = { id: 'FoF', start: 0, base: 24 };
     expect(getEndAt(fof, buffs)).toBeCloseTo(19.50, 2);
   });
-
-  it('RSK shortens after Blessing extended', () => {
-    const rsk: SkillCast = { id: 'RSK', start: 0, base: 10 };
-    const buffs1: Buff[] = [b('Blessing', 0, 4)];
-    const end1 = getEndAt(rsk, buffs1);
-    const buffs2: Buff[] = [b('Blessing', 0, 8)];
-    const end2 = getEndAt(rsk, buffs2);
-    expect(end2).toBeLessThan(end1);
-  });
 });

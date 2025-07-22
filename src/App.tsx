@@ -12,15 +12,11 @@ import TPIcon from './Pics/TP.jpg';
 export interface BuffRec { key: string; start: number; end: number }
 
 export function hasteAt(
-  t: number,
-  buffs: BuffRec[] = [],
+  _t: number,
+  _buffs: BuffRec[] = [],
   hasteRating = 0,
 ): number {
-  const blessingStacks = buffs.filter(
-    b => b.key === 'Blessing' && t >= b.start && t < b.end,
-  ).length;
-  const blessMult = Math.pow(1.15, blessingStacks);
-  return (1 + ratingToHaste(hasteRating)) * blessMult - 1;
+  return ratingToHaste(hasteRating);
 }
 
 export default function App() {
@@ -159,23 +155,11 @@ export default function App() {
       ));
       extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: 'CC青龙', src: id, group: 3 } as any);
       setNextBuffId(nextBuffId - 1);
-      extraBuffs.push({ id: nextBuffId - 1, key: 'Blessing', start, end: start + 4, label: '祝福', src: id, group: 2 } as any);
-      setNextBuffId(nextBuffId - 2);
     }
 
     if (extraBuffs.length) {
       setBuffs(bs => {
-        let out = [...bs, ...extraBuffs];
-        extraBuffs.forEach(bd => {
-          if (bd.key.endsWith('_BD')) {
-            out = out.map(ob =>
-              ob.key === 'Blessing' && ob.start <= bd.end && bd.end <= ob.end
-                ? { ...ob, end: ob.end + 4 }
-                : ob
-            );
-          }
-        });
-        return out;
+        return [...bs, ...extraBuffs];
       });
     }
 

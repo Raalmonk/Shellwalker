@@ -110,7 +110,6 @@ export const Timeline = ({
         start: new Date(start * 1000),
         end: new Date(end * 1000),
         editable: { updateTime: true },
-        timeAxis: { scale: "second", step: GRID_STEP_MS / 1000 },
         onMove: (item: any, callback: (item: any) => void) => {
           const snap = (ms: number) =>
             Math.round(ms / GRID_STEP_MS) * GRID_STEP_MS;
@@ -127,9 +126,9 @@ export const Timeline = ({
         },
         format: {
           minorLabels: (date: any) => {
-            const sec = date.valueOf() / 1000;
+            const sec = Math.floor(date.valueOf() / 1000);
             const m = String(Math.floor(sec / 60)).padStart(2, "0");
-            const s = (sec % 60).toFixed(1).padStart(4, "0");
+            const s = String(sec % 60).padStart(2, "0");
             return `${m}:${s}`;
           },
           majorLabels: () => "",

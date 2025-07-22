@@ -3,6 +3,8 @@ import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
+import { GRID_STEP_MS, } from './constants/time';
+import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
 import { buildTimeline } from './lib/simulator';
 import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
@@ -135,8 +137,9 @@ export default function App() {
         start: now,
         end: castDur > 0 ? now + castDur : undefined,
         label,
-      ability: key,
-    },
+        ability: key,
+        pendingDelete: false,
+      },
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
@@ -253,21 +256,31 @@ export default function App() {
     const target = items.find(i => i.id === id);
     const abilityKey = target?.ability as WWKey | undefined;
     const prevDur = target && target.end ? target.end - target.start : 0;
-    const newEnd = end ?? (target && target.end ? start + prevDur : undefined);
-    const notReady = abilityKey ? isOnCD(abilityKey, start, id) : false;
-    const channelling = isChanneling(start, id);
+    const snapStart = roundToGridMs(start * 1000) / 1000;
+    let finalStart = snapStart;
+    if (abilityKey) {
+      finalStart = getNextAvailableCastTime(
+        abilityKey,
+        snapStart,
+        { casts, buffs },
+        String(id),
+      );
+    }
+    const newEnd = end ?? (target && target.end ? finalStart + prevDur : undefined);
+    const notReady = abilityKey ? isOnCD(abilityKey, finalStart, id) : false;
+    const channelling = isChanneling(finalStart, id);
     setItems(items => items.map(it => {
       if (it.id !== id) return it;
       let cls = (it.className || '').replace('warning', '').trim();
       if (notReady || channelling) cls = (cls + ' warning').trim();
-      return { ...it, start, end: newEnd, className: cls };
+      return { ...it, start: finalStart, end: newEnd, className: cls };
     }));
-    const delta = start - (target?.start || 0);
+    const delta = finalStart - (target?.start || 0);
     setBuffs(bs => bs.map(b => b.src === id ? { ...b, start: b.start + delta, end: b.end + delta } : b));
     setCasts(cs => {
       const out: Record<string, SkillCast[]> = {};
       for (const [k, recs] of Object.entries(cs)) {
-        out[k] = recs.map(r => (r.id !== String(id) ? r : { ...r, start }));
+        out[k] = recs.map(r => (r.id !== String(id) ? r : { ...r, start: finalStart }));
       }
       return out;
     });
@@ -277,7 +290,7 @@ export default function App() {
     setItems(items => {
       const it = items.find(i => i.id === id);
       if (!it) return items;
-      if (it.className === 'highlight') {
+      if (it.pendingDelete) {
         // delete item
         setCasts(cs => {
           const out: Record<string, SkillCast[]> = {};
@@ -289,12 +302,23 @@ export default function App() {
         setBuffs(bs => bs.filter(b => b.src !== id));
         return items.filter(i => i.id !== id);
       } else {
-        return items.map(i => i.id === id ? { ...i, className: 'highlight' } : i);
+        return items.map(i =>
+          i.id === id ? { ...i, pendingDelete: true, className: 'highlight' } : i
+        );
       }
     });
   };
 
-  const selectItem = (id: number) => setSelected(id);
+  const selectItem = (id: number) => {
+    setItems(items =>
+      items.map(it =>
+        it.id === id && it.pendingDelete
+          ? { ...it, pendingDelete: false, className: it.className?.replace('highlight', '').trim() }
+          : it,
+      ),
+    );
+    setSelected(id);
+  };
 
   const snapSelected = () => {
     if (selected == null) return;

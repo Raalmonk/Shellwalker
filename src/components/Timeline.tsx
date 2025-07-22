@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { DataSet, Timeline as VisTimeline } from "vis-timeline/standalone";
 import type { DataItem, DataGroup } from "vis-timeline";
+import { GRID_STEP_MS } from "../constants/time";
 
 // Item displayed on the timeline. `end` is optional so we can draw range
 // bars (used for cooldown visualization).
@@ -12,6 +13,7 @@ export interface TLItem {
   label: string;
   ability?: string; // ability key, used for editing
   className?: string;
+  pendingDelete?: boolean;
 }
 
 const groups = [
@@ -108,19 +110,26 @@ export const Timeline = ({
         start: new Date(start * 1000),
         end: new Date(end * 1000),
         editable: { updateTime: true },
+        timeAxis: { scale: "second", step: GRID_STEP_MS / 1000 },
         onMove: (item: any, callback: (item: any) => void) => {
+          const snap = (ms: number) =>
+            Math.round(ms / GRID_STEP_MS) * GRID_STEP_MS;
+          const startMs = snap(item.start.valueOf());
+          const endMs = item.end ? snap(item.end.valueOf()) : undefined;
+          item.start = new Date(startMs);
+          if (endMs !== undefined) item.end = new Date(endMs);
           moveRef.current?.(
             Number(item.id),
-            item.start.valueOf() / 1000,
-            item.end ? item.end.valueOf() / 1000 : undefined,
+            startMs / 1000,
+            endMs !== undefined ? endMs / 1000 : undefined,
           );
           callback(item);
         },
         format: {
           minorLabels: (date: any) => {
-            const sec = Math.floor(date.valueOf() / 1000);
+            const sec = date.valueOf() / 1000;
             const m = String(Math.floor(sec / 60)).padStart(2, "0");
-            const s = String(sec % 60).padStart(2, "0");
+            const s = (sec % 60).toFixed(1).padStart(4, "0");
             return `${m}:${s}`;
           },
           majorLabels: () => "",

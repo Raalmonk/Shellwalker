@@ -14,14 +14,18 @@ import { AbilityIcon } from './components/AbilityIcon';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
 
-export interface BuffRec { key: string; start: number; end: number }
+export interface BuffRec { key: string; start: number; end: number; multiplier?: number }
 
 export function hasteAt(
-  _t: number,
-  _buffs: BuffRec[] = [],
+  t: number,
+  buffs: BuffRec[] = [],
   hasteRating = 0,
 ): number {
-  return ratingToHaste(hasteRating);
+  const gear = 1 + ratingToHaste(hasteRating);
+  const mult = buffs
+    .filter(b => t >= b.start && t < b.end)
+    .reduce((p, b) => p * (b.multiplier ?? 1), 1);
+  return gear * mult;
 }
 
 export default function App() {
@@ -41,7 +45,7 @@ export default function App() {
   const [nextId, setNextId] = useState(1);
   const [showCD, setShowCD] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
-  interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; }
+  interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; }
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
 
@@ -59,7 +63,7 @@ export default function App() {
 
   const abilities = wwData(stats.haste);
 
-  const timeline = React.useMemo(() => buildTimeline(casts, buffs), [casts, buffs]);
+  const timeline = React.useMemo(() => buildTimeline(casts, buffs, stats.haste), [casts, buffs, stats.haste]);
 
   const buffsAt = (t: number, extra: Buff[] = []) =>
     [...buffs, ...extra].filter(b => t >= b.start && t < b.end);
@@ -80,7 +84,7 @@ export default function App() {
     const recs = (casts[key] || []).filter(c => c.id !== String(exclude));
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     const overlaps = recs.filter(c => {
-      const end = getEndAt(c, buffs);
+      const end = getEndAt(c, buffs, stats.haste);
       return start < end && end > c.start;
     });
     return overlaps.length >= maxCharges;
@@ -94,16 +98,17 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 4,
-    SEF: 4,
-    CC: 4,
-    AA: 5,
-    SW: 5,
-    FoF: 6,
-    RSK: 6,
-    WU: 6,
-    TP: 7,
-    BOK: 7,
+    Xuen: 5,
+    SEF: 5,
+    CC: 5,
+    AA: 6,
+    SW: 6,
+    FoF: 7,
+    RSK: 7,
+    WU: 7,
+    TP: 8,
+    BOK: 8,
+    BL: 5,
   };
 
   // handler when an ability button is clicked
@@ -116,7 +121,7 @@ export default function App() {
       : castDurBase;
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
-    const active = cds.filter(cd => getEndAt(cd, buffs) > now);
+    const active = cds.filter(cd => getEndAt(cd, buffs, stats.haste) > now);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (active.length >= maxCharges) {
       alert(t('cd没转好'));
@@ -148,10 +153,10 @@ export default function App() {
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 4 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 4 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
@@ -161,7 +166,10 @@ export default function App() {
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 4 } as any);
+      setNextBuffId(nextBuffId - 1);
+    } else if (key === 'BL') {
+      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 3, src: id, multiplier: 1.3 } as any);
       setNextBuffId(nextBuffId - 1);
     }
 
@@ -234,7 +242,7 @@ export default function App() {
       if (extra > 0) {
         res.push({
           id: 10000 + i,
-          group: 3,
+          group: 4,
           start: s,
           end: e,
           label: `${t('青龙')}+${extra.toFixed(2)}cd/s`,
@@ -256,6 +264,30 @@ export default function App() {
       className: 'buff',
     })),
   ];
+
+  const hasteItems: TLItem[] = (() => {
+    const hs = buffs.filter(b => b.multiplier);
+    const times = Array.from(new Set([
+      0,
+      ...hs.flatMap(b => [b.start, b.end]),
+      viewStart + duration,
+    ])).sort((a, b) => a - b);
+    const res: TLItem[] = [];
+    for (let i = 0; i < times.length - 1; i++) {
+      const s = times[i];
+      const e = times[i + 1];
+      const mult = hasteAt((s + e) / 2, buffs, stats.haste);
+      res.push({
+        id: 20000 + i,
+        group: 1,
+        start: s,
+        end: e,
+        label: `${mult.toFixed(2)}×`,
+        className: 'haste',
+      });
+    }
+    return res;
+  })();
 
   const moveItem = (id: number, start: number, end?: number) => {
     const target = items.find(i => i.id === id);
@@ -333,7 +365,7 @@ export default function App() {
     const prev = (casts[key] || [])
       .filter(cd => cd.id !== String(selected) && cd.start < it.start)
       .sort((a, b) => b.start - a.start)[0];
-    if (prev) moveItem(selected, getEndAt(prev, buffs));
+    if (prev) moveItem(selected, getEndAt(prev, buffs, stats.haste));
   };
 
   const update = (field: string, value: number) =>
@@ -381,7 +413,7 @@ export default function App() {
           {Math.max(
             0,
             (abilities.SEF.charges ?? 2) -
-              (casts['SEF'] || []).filter(c => c.start <= time && getEndAt(c, buffs) > time).length
+              (casts['SEF'] || []).filter(c => c.start <= time && getEndAt(c, buffs, stats.haste) > time).length
           )}
         </div>
         <div>{t('时间')}: {formatTime(time)}</div>
@@ -409,7 +441,7 @@ export default function App() {
         const it = items.find(i => i.id === selected);
         const cd = it && casts[it.ability ?? '']?.find(c => c.id === String(selected));
         if (!it || !cd) return null;
-        const endAt = getEndAt(cd, buffs);
+        const endAt = getEndAt(cd, buffs, stats.haste);
         return (
           <div className="border p-2 space-y-1 text-sm">
             <div>{abilities[it.ability as WWKey].name}</div>
@@ -452,7 +484,7 @@ export default function App() {
       })()}
 
       <Timeline
-        items={[...items, ...buffItems, ...cdBars]}
+        items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
         start={viewStart}
         end={viewStart + duration}
         cursor={time}

@@ -1,5 +1,4 @@
-import { BuffManager, AzureDragonHeart, Blessing, cdSpeedAt, fofModAt, hasteMult } from './azureDragonHeart';
-import { BUFF_DURATION } from '../constants/buffs';
+import { BuffManager, AzureDragonHeart, cdSpeedAt, fofModAt, hasteMult } from './azureDragonHeart';
 
 export interface SkillOptions {
   name: string;
@@ -28,7 +27,6 @@ export class Skill {
     } else if (this.opts.name === 'CC') {
       const start = time + cast;
       manager.add(new AzureDragonHeart('CC', start));
-      manager.add(new Blessing(start));
     }
     manager.advance(time); // ensure expiration check upto now
     return { cd, cast };

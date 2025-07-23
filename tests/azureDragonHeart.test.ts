@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const { describe, it } = require('mocha');
-const { BuffManager, cdSpeedAt, fofModAt } = require('../src/combat/azureDragonHeart');
+const { BuffManager, cdSpeedAt, fofModAt, hasteMult } = require('../src/combat/azureDragonHeart');
 const { AA, SW, CC } = require('../src/combat/skills');
 
 function use(skill: any, time: number, mgr: any) {
@@ -30,7 +30,7 @@ describe('azure dragon', () => {
     assert.equal(mgr.activeDragons(6).length, 1);
     const b = mgr.blessing(6);
     assert.ok(b);
-    assert.equal(b.hasteMult, 1.15);
+    assert.equal(hasteMult(mgr,6), 1.15);
     mgr.advance(12);
     assert.ok(b.end >= 10);
   });

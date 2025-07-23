@@ -22,8 +22,9 @@ import { GUIDE_COLOR } from '../constants/colors';
 
 const groups = [
   'Haste',
+  'Buffs',
   t('Boss技能'),
-  t('祝福'),
+  'Blessing',
   t('青龙之心'),
   'Major Cooldown',
   'Minor Cooldown',

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hasteAt, BuffRec } from '../src/App';
+import { hasteAt, HasteBuff as BuffRec } from '../src/lib/haste';
 
 describe('haste multiplier', () => {
   const rating = 13200; // 20% haste

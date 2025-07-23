@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
-import { ratingToHaste } from './lib/haste';
+import { ratingToHaste, hasteAt } from './lib/haste';
 import { getEndAt } from './utils/getEndAt';
 import { GRID_STEP_MS, } from './constants/time';
 import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
@@ -15,18 +15,6 @@ import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
 
 export interface BuffRec { key: string; start: number; end: number; multiplier?: number }
-
-export function hasteAt(
-  t: number,
-  buffs: BuffRec[] = [],
-  hasteRating = 0,
-): number {
-  const gear = 1 + ratingToHaste(hasteRating);
-  const mult = buffs
-    .filter(b => t >= b.start && t < b.end)
-    .reduce((p, b) => p * (b.multiplier ?? 1), 1);
-  return gear * mult;
-}
 
 export default function App() {
   const [stats, setStats] = useState({
@@ -63,7 +51,7 @@ export default function App() {
 
   const abilities = wwData(stats.haste);
 
-  const timeline = React.useMemo(() => buildTimeline(casts, buffs, stats.haste), [casts, buffs, stats.haste]);
+  const timeline = React.useMemo(() => buildTimeline(casts, buffs), [casts, buffs]);
 
   const buffsAt = (t: number, extra: Buff[] = []) =>
     [...buffs, ...extra].filter(b => t >= b.start && t < b.end);
@@ -84,7 +72,7 @@ export default function App() {
     const recs = (casts[key] || []).filter(c => c.id !== String(exclude));
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     const overlaps = recs.filter(c => {
-      const end = getEndAt(c, buffs, stats.haste);
+      const end = getEndAt(c, buffs);
       return start < end && end > c.start;
     });
     return overlaps.length >= maxCharges;
@@ -121,7 +109,7 @@ export default function App() {
       : castDurBase;
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
-    const active = cds.filter(cd => getEndAt(cd, buffs, stats.haste) > now);
+    const active = cds.filter(cd => getEndAt(cd, buffs) > now);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (active.length >= maxCharges) {
       alert(t('cd没转好'));
@@ -180,6 +168,10 @@ export default function App() {
     }
 
     const baseCd = ability.cooldown ?? 0;
+    const hasteMult = (ability as any).affectedByHaste
+      ? hasteAt(now, buffs, stats.haste)
+      : 1;
+    const cdDur = baseCd / hasteMult;
     setCasts(cdObj => ({
       ...cdObj,
       [key]: [
@@ -187,7 +179,8 @@ export default function App() {
         {
           id: String(id),
           start: now,
-          base: baseCd,
+          base: cdDur,
+          haste: hasteMult,
         },
       ],
     }));
@@ -365,7 +358,7 @@ export default function App() {
     const prev = (casts[key] || [])
       .filter(cd => cd.id !== String(selected) && cd.start < it.start)
       .sort((a, b) => b.start - a.start)[0];
-    if (prev) moveItem(selected, getEndAt(prev, buffs, stats.haste));
+    if (prev) moveItem(selected, getEndAt(prev, buffs));
   };
 
   const update = (field: string, value: number) =>
@@ -413,7 +406,7 @@ export default function App() {
           {Math.max(
             0,
             (abilities.SEF.charges ?? 2) -
-              (casts['SEF'] || []).filter(c => c.start <= time && getEndAt(c, buffs, stats.haste) > time).length
+              (casts['SEF'] || []).filter(c => c.start <= time && getEndAt(c, buffs) > time).length
           )}
         </div>
         <div>{t('时间')}: {formatTime(time)}</div>
@@ -441,7 +434,7 @@ export default function App() {
         const it = items.find(i => i.id === selected);
         const cd = it && casts[it.ability ?? '']?.find(c => c.id === String(selected));
         if (!it || !cd) return null;
-        const endAt = getEndAt(cd, buffs, stats.haste);
+        const endAt = getEndAt(cd, buffs);
         return (
           <div className="border p-2 space-y-1 text-sm">
             <div>{abilities[it.ability as WWKey].name}</div>

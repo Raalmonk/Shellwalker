@@ -12,7 +12,7 @@ export const zhToEn: Record<string, string> = {
   '转好时间': 'Ready At',
   'Boss技能': 'Boss Abilities',
   '祝福': 'Blessing',
-  '青龙之心': "Yolo’s Heart",
+  '青龙之心': "Yolo's Heart",
   '青龙': 'Yolo',
   'AA青龙': 'AA Yolo',
   'SW青龙': 'SW Yolo',

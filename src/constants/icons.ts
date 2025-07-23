@@ -7,7 +7,7 @@ import CC from '../assets/abilityIcons/inv_ability_conduitofthecelestialsmonk_ce
 import AA from '../assets/abilityIcons/inv_hand_1h_artifactskywall_d_01.jpg';
 import SEF from '../assets/abilityIcons/spell_nature_giftofthewild.jpg';
 import FoF from '../assets/abilityIcons/monk_ability_fistoffury.jpg';
-import BL from '../assets/abilityIcons/ability_monk_risingsunkick.jpg';
+import BL from '../assets/abilityIcons/spell_orc_berserker.jpg';
 
 export const ABILITY_ICON_MAP: Record<string, {src: string; abbr: string}> = {
   WU:  {src: WU,  abbr: 'WU'},

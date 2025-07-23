@@ -86,17 +86,17 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 5,
-    SEF: 5,
-    CC: 5,
-    AA: 6,
-    SW: 6,
-    FoF: 7,
-    RSK: 7,
-    WU: 7,
-    TP: 8,
-    BOK: 8,
-    BL: 5,
+    Xuen: 6,
+    SEF: 6,
+    CC: 6,
+    AA: 7,
+    SW: 7,
+    FoF: 8,
+    RSK: 8,
+    WU: 8,
+    TP: 9,
+    BOK: 9,
+    BL: 2,
   };
 
   // handler when an ability button is clicked
@@ -141,10 +141,10 @@ export default function App() {
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 4 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 5 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 4 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 5 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
@@ -154,10 +154,10 @@ export default function App() {
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 4 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 5 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'BL') {
-      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 3, src: id, multiplier: 1.3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 2, src: id, multiplier: 1.3 } as any);
       setNextBuffId(nextBuffId - 1);
     }
 
@@ -235,7 +235,7 @@ export default function App() {
       if (extra > 0) {
         res.push({
           id: 10000 + i,
-          group: 4,
+          group: 5,
           start: s,
           end: e,
           label: `${t('青龙')}+${extra.toFixed(2)}cd/s`,

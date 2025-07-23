@@ -9,24 +9,20 @@ import {
 } from '../constants/buffs';
 
 export class Blessing extends Buff {
-  stacks = 1;
-  constructor(start: number) {
-    super('Blessing', start, BUFF_DURATION.Blessing);
-  }
-
-  addStack() {
-    this.stacks += 1;
-    this.duration += BUFF_DURATION.Blessing;
-  }
-
-  get hasteMult() {
-    return Math.pow(BLESSING_HASTE, this.stacks);
+  constructor(
+    public source: DragonType | 'POST',
+    start: number,
+    duration: number = BUFF_DURATION.Blessing,
+  ) {
+    super('Blessing', start, duration);
   }
 }
 
 export class AzureDragonHeart extends Buff {
+  blessing: Blessing;
   constructor(public kind: DragonType, start: number) {
     super(`${kind}_BD`, start, BUFF_DURATION[kind]);
+    this.blessing = new Blessing(kind, start, BUFF_DURATION[kind]);
   }
 }
 
@@ -44,13 +40,8 @@ export class BuffManager {
 
   add(buff: Buff) {
     if (buff instanceof Blessing) {
-      const active = this.buffs.find(
-        b => b instanceof Blessing && b.isActive(buff.start),
-      ) as Blessing | undefined;
-      if (active) {
-        active.addStack();
-        return active;
-      }
+      const active = this.activeBlessings(buff.start);
+      if (active.length >= 3) return buff;
       this.buffs.push(buff);
       return buff;
     }
@@ -64,16 +55,16 @@ export class BuffManager {
             b.isActive(buff.start)
           ) {
             b.duration = buff.start - b.start;
+            b.blessing.duration = b.duration;
             b.check(buff.start);
+            b.blessing.check(buff.start);
           }
         }
       }
       buff.on('expire', () => {
-        const blessing = this.buffs.find(
-          b => b instanceof Blessing && b.isActive(buff.end),
-        ) as Blessing | undefined;
-        if (blessing) blessing.extend(BUFF_DURATION.Blessing);
+        this.addPostBlessing(buff.end, buff.kind);
       });
+      this.add(buff.blessing);
       this.buffs.push(buff);
       return buff;
     }
@@ -92,10 +83,30 @@ export class BuffManager {
     ) as AzureDragonHeart[];
   }
 
-  blessing(time = this.time) {
-    return this.activeBuffs(time).find(
+  activeBlessings(time = this.time) {
+    return this.activeBuffs(time).filter(
       b => b instanceof Blessing,
-    ) as Blessing | undefined;
+    ) as Blessing[];
+  }
+
+  blessing(time = this.time) {
+    return this.activeBlessings(time)[0];
+  }
+
+  private addPostBlessing(time: number, ended: DragonType) {
+    const active = this.activeBlessings(time);
+    const other = active.find(
+      b => b.source !== ended && b.source !== 'POST',
+    );
+    if (other) {
+      other.extend(BUFF_DURATION.Blessing);
+    }
+    const post = active.find(b => b.source === 'POST');
+    if (post) {
+      post.extend(BUFF_DURATION.Blessing);
+    } else if (active.length < 3) {
+      this.buffs.push(new Blessing('POST', time));
+    }
   }
 }
 
@@ -123,6 +134,6 @@ export function fofModAt(manager: BuffManager, time = manager.time) {
 }
 
 export function hasteMult(manager: BuffManager, time = manager.time) {
-  const blessing = manager.blessing(time);
-  return blessing ? blessing.hasteMult : 1;
+  const stacks = manager.activeBlessings(time).length;
+  return Math.pow(BLESSING_HASTE, stacks);
 }

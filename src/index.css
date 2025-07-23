@@ -40,6 +40,12 @@ body.light {
   color: #fff;
 }
 
+.vis-item.blessing {
+  background-color: #004400;
+  border-color: #004400;
+  color: #fff;
+}
+
 .vis-item.event-guide {
   background-color: #003377;
   border-color: #003377;

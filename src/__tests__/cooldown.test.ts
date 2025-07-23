@@ -12,7 +12,7 @@ describe('cdEnd integration', () => {
   });
 
   it('AA ends at 25.5 s', () => {
-    const end = cdEnd(0, 30, ql, (t, b) => cdSpeedAt(t, b) * (1 + hasteAt(t, b)));
+    const end = cdEnd(0, 30, ql, (t, b) => cdSpeedAt(t, b) * hasteAt(t, b));
     expect(end).toBeCloseTo(25.5, 1);
   });
 });

@@ -288,4 +288,14 @@
     "gcd": 1,
     "cooldown": 90
   }
+  ,
+  {
+    "name": "Bloodlust",
+    "id": 999998,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 90
+  }
 ]

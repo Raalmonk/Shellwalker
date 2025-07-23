@@ -34,6 +34,12 @@ body.light {
   border-color: rgba(0, 128, 0, 0.5);
 }
 
+.vis-item.haste {
+  background-color: #001C55;
+  border-color: #001C55;
+  color: #fff;
+}
+
 .vis-item.event-guide {
   background-color: #003377;
   border-color: #003377;

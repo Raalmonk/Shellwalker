@@ -21,6 +21,7 @@ import { t } from '../i18n/en';
 import { GUIDE_COLOR } from '../constants/colors';
 
 const groups = [
+  'Haste',
   t('Boss技能'),
   t('祝福'),
   t('青龙之心'),

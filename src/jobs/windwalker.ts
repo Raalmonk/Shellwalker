@@ -11,6 +11,7 @@ export const WW = {
   BOK: 100784,
   RSK: 107428,
   FoF: 113656,
+  BL: 999998,
 } as const;
 
 export type WWKey = keyof typeof WW;

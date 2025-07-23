@@ -2,25 +2,18 @@ import { Buff } from './buff';
 import {
   BUFF_DURATION,
   BLESSING_HASTE,
-  DRAGON_TYPES,
   CD_SPEED,
   FOF_SPEED,
   DragonType,
 } from '../constants/buffs';
 
 export class Blessing extends Buff {
-  stacks = 1;
-  constructor(start: number) {
-    super('Blessing', start, BUFF_DURATION.Blessing);
-  }
-
-  addStack() {
-    this.stacks += 1;
-    this.duration += BUFF_DURATION.Blessing;
-  }
-
-  get hasteMult() {
-    return Math.pow(BLESSING_HASTE, this.stacks);
+  constructor(
+    public source: DragonType | 'POST',
+    start: number,
+    duration = BUFF_DURATION.Blessing,
+  ) {
+    super('BLG', start, duration);
   }
 }
 
@@ -44,35 +37,40 @@ export class BuffManager {
 
   add(buff: Buff) {
     if (buff instanceof Blessing) {
-      const active = this.buffs.find(
-        b => b instanceof Blessing && b.isActive(buff.start),
-      ) as Blessing | undefined;
-      if (active) {
-        active.addStack();
-        return active;
-      }
       this.buffs.push(buff);
       return buff;
     }
 
     if (buff instanceof AzureDragonHeart) {
-      if (buff.kind === 'CC') {
+      if (buff.kind === 'CC' || buff.kind === 'AA') {
         for (const b of this.buffs) {
           if (
             b instanceof AzureDragonHeart &&
-            b.kind === 'AA' &&
+            (b.kind === 'AA' || b.kind === 'CC') &&
+            b.kind !== buff.kind &&
             b.isActive(buff.start)
           ) {
+            // end the previous window immediately
             b.duration = buff.start - b.start;
+            // shorten its blessing as well
+            const bl = this.buffs.find(
+              bb =>
+                bb instanceof Blessing &&
+                bb.source === b.kind &&
+                bb.isActive(buff.start),
+            ) as Blessing | undefined;
+            if (bl) {
+              bl.duration = buff.start - bl.start;
+              bl.check(buff.start);
+            }
             b.check(buff.start);
           }
         }
       }
+      const blg = new Blessing(buff.kind, buff.start, BUFF_DURATION[buff.kind]);
+      this.buffs.push(blg);
       buff.on('expire', () => {
-        const blessing = this.buffs.find(
-          b => b instanceof Blessing && b.isActive(buff.end),
-        ) as Blessing | undefined;
-        if (blessing) blessing.extend(BUFF_DURATION.Blessing);
+        this.addPostBlessing(buff.end);
       });
       this.buffs.push(buff);
       return buff;
@@ -80,6 +78,17 @@ export class BuffManager {
 
     this.buffs.push(buff);
     return buff;
+  }
+
+  private addPostBlessing(time: number) {
+    const active = this.buffs.find(
+      b => b instanceof Blessing && b.isActive(time),
+    ) as Blessing | undefined;
+    if (active) {
+      active.duration += BUFF_DURATION.Blessing;
+    } else {
+      this.buffs.push(new Blessing('POST', time));
+    }
   }
 
   activeBuffs(time = this.time) {
@@ -92,10 +101,15 @@ export class BuffManager {
     ) as AzureDragonHeart[];
   }
 
-  blessing(time = this.time) {
-    return this.activeBuffs(time).find(
+  activeBlessings(time = this.time) {
+    return this.activeBuffs(time).filter(
       b => b instanceof Blessing,
-    ) as Blessing | undefined;
+    ) as Blessing[];
+  }
+
+  blessingHaste(time = this.time) {
+    const n = this.activeBlessings(time).length;
+    return Math.pow(BLESSING_HASTE, n);
   }
 }
 
@@ -123,6 +137,5 @@ export function fofModAt(manager: BuffManager, time = manager.time) {
 }
 
 export function hasteMult(manager: BuffManager, time = manager.time) {
-  const blessing = manager.blessing(time);
-  return blessing ? blessing.hasteMult : 1;
+  return manager.blessingHaste(time);
 }

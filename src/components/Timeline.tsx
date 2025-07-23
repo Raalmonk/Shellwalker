@@ -5,9 +5,9 @@ import { GRID_STEP_MS } from "../constants/time";
 
 // Item displayed on the timeline. `end` is optional so we can draw range
 // bars (used for cooldown visualization).
-export interface TLItem {
-  id: number;
-  group: number; // group id 1-7
+  export interface TLItem {
+    id: number;
+    group: number; // group id 1-9
   start: number; // start time in seconds
   end?: number; // optional end time in seconds
   label: string;
@@ -24,6 +24,7 @@ const groups = [
   'Haste',
   t('Boss技能'),
   t('祝福'),
+  'Blessing',
   t('青龙之心'),
   'Major Cooldown',
   'Minor Cooldown',

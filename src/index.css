@@ -34,6 +34,12 @@ body.light {
   border-color: rgba(0, 128, 0, 0.5);
 }
 
+.vis-item.blessing {
+  background-color: #004400;
+  border-color: #004400;
+  color: #fff;
+}
+
 .vis-item.haste {
   background-color: #001C55;
   border-color: #001C55;

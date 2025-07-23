@@ -36,3 +36,22 @@ export function effTime(base: number, hastePct: number, floor = 0.75) {
   const t = base / (1 + hastePct);
   return base === 1 ? 1 : Math.max(t, floor); // 踏风 GCD 固定 1
 }
+
+export interface HasteBuff {
+  start: number;
+  end: number;
+  multiplier?: number;
+}
+
+/**
+ * Compute total haste multiplier at time `t`.
+ * `rating` is gear haste rating (e.g. 13200 for 20%).
+ * Buffs may carry a `multiplier` field like 1.3 for Bloodlust.
+ */
+export function hasteAt(t: number, buffs: HasteBuff[] = [], rating = 0): number {
+  const gear = 1 + ratingToHaste(rating);
+  const mult = buffs
+    .filter(b => t >= b.start && t < b.end)
+    .reduce((p, b) => p * (b.multiplier ?? 1), 1);
+  return gear * mult;
+}

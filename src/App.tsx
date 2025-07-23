@@ -8,6 +8,7 @@ import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
 import { buildTimeline } from './lib/simulator';
 import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
+import { computeBlessingSegments } from './util/blessingSegments';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
 import { AbilityIcon } from './components/AbilityIcon';
@@ -275,14 +276,18 @@ export default function App() {
     return res;
   })();
 
-  const blessingItems: TLItem[] = blessingBuffs.map((b, i) => ({
-    id: 15000 + i,
-    group: 4,
-    start: b.start,
-    end: b.end,
-    label: '',
-    className: 'blessing',
-  }));
+  const blessingItems: TLItem[] = (() => {
+    const segs = computeBlessingSegments(blessingBuffs);
+    return segs.map((seg, i) => ({
+      id: 15000 + i,
+      group: 4,
+      start: seg.start,
+      end: seg.end,
+      label: `${seg.stacks}×`,
+      className: 'blessing',
+      stacks: seg.stacks,
+    }));
+  })();
 
   const buffItems: TLItem[] = [
     ...qlItems,
@@ -321,6 +326,22 @@ export default function App() {
     }
     return res;
   })();
+
+  useEffect(() => {
+    const ro = new ResizeObserver(entries => {
+      for (const e of entries) {
+        const el = e.target as HTMLElement;
+        if (e.contentRect.width < 24) {
+          el.classList.add('hide-text');
+        } else {
+          el.classList.remove('hide-text');
+        }
+      }
+    });
+    const items = document.querySelectorAll('.vis-item.blessing');
+    items.forEach(it => ro.observe(it));
+    return () => ro.disconnect();
+  }, [blessingItems]);
 
   const moveItem = (id: number, start: number, end?: number) => {
     const target = items.find(i => i.id === id);

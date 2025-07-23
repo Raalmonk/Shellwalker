@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { BuffManager, hasteMult } from '../src/combat/azureDragonHeart';
 import { CC, SW } from '../src/combat/skills';
+import { computeBlessingSegments } from '../src/util/blessingSegments';
 
 function use(skill:any, t:number, mgr:BuffManager) {
   skill.use(t, mgr);
@@ -26,5 +27,16 @@ describe('Blessing stacks', () => {
     const sw = stacksAt10.find(b => b.source === 'SW');
     expect(sw && Math.abs(sw.end - 17.4) < 0.001).toBe(true);
     expect(hasteMult(mgr, 10)).toBeCloseTo(Math.pow(1.15, 2), 2);
+  });
+
+  it('segments show stack labels', () => {
+    const buffs = [
+      { start: 0, end: 6 },
+      { start: 2, end: 8 },
+      { start: 4, end: 10 },
+    ];
+    const segs = computeBlessingSegments(buffs);
+    const labels = segs.map(s => `${s.stacks}×`).join(' ');
+    expect(labels.includes('3×')).toBe(true);
   });
 });

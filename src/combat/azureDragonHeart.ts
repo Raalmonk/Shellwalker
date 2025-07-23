@@ -7,7 +7,6 @@ import {
   FOF_SPEED,
   DragonType,
 } from '../constants/buffs';
-import { ratingToHaste } from '../lib/haste';
 
 export class Blessing extends Buff {
   stacks = 1;
@@ -31,16 +30,9 @@ export class AzureDragonHeart extends Buff {
   }
 }
 
-export class Bloodlust extends Buff {
-  constructor(start: number) {
-    super('BL', start, 40, 1.3);
-  }
-}
-
 export class BuffManager {
   private buffs: Buff[] = [];
   time = 0;
-  constructor(public hasteRating = 0) {}
 
   advance(to: number) {
     this.time = to;
@@ -131,9 +123,6 @@ export function fofModAt(manager: BuffManager, time = manager.time) {
 }
 
 export function hasteMult(manager: BuffManager, time = manager.time) {
-  const gear = 1 + ratingToHaste(manager.hasteRating);
-  const buffs = manager
-    .activeBuffs(time)
-    .reduce((m, b) => m * (b.hasteMult ?? 1), 1);
-  return gear * buffs;
+  const blessing = manager.blessing(time);
+  return blessing ? blessing.hasteMult : 1;
 }

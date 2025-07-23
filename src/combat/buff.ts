@@ -6,8 +6,6 @@ export class Buff extends EventEmitter {
     public name: string,
     public start: number,
     public duration: number,
-    /** multiplicative haste bonus (1 = no haste) */
-    public hasteMult = 1,
   ) {
     super();
   }

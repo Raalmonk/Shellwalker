@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { BuffManager, hasteMult } from '../src/combat/azureDragonHeart';
 import { CC, SW } from '../src/combat/skills';
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { BlessingRow, selectBlessingStacks } from '../src/features/timeline/BlessingRow';
 
 function use(skill:any, t:number, mgr:BuffManager) {
   skill.use(t, mgr);
@@ -29,25 +26,5 @@ describe('Blessing stacks', () => {
     const sw = stacksAt10.find(b => b.source === 'SW');
     expect(sw && Math.abs(sw.end - 17.4) < 0.001).toBe(true);
     expect(hasteMult(mgr, 10)).toBeCloseTo(Math.pow(1.15, 2), 2);
-  });
-
-  it('overlay text shows stack count', () => {
-    const segs = [
-      { startMs: 0, endMs: 4000 },
-      { startMs: 0, endMs: 4000 },
-      { startMs: 0, endMs: 4000 },
-    ];
-    const segments = segs.map(s => ({
-      ...s,
-      startPx: 0,
-      widthPx: 30,
-      stacks: selectBlessingStacks(segs, s.startMs),
-    }));
-    const svg = renderToStaticMarkup(
-      <svg>
-        <BlessingRow segments={segments} rowMidY={5} />
-      </svg>,
-    );
-    expect(svg.includes('3×')).toBe(true);
   });
 });

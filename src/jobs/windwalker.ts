@@ -16,7 +16,12 @@ export const WW = {
 
 export type WWKey = keyof typeof WW;
 
+const HASTED: WWKey[] = ['RSK', 'FoF', 'WU'];
+
 export const wwData = (haste: number) =>
   Object.fromEntries(
-    Object.entries(WW).map(([k, id]) => [k, getSpell(id, haste)])
-  ) as Record<WWKey, ReturnType<typeof getSpell>>;
+    Object.entries(WW).map(([k, id]) => [
+      k,
+      { ...getSpell(id, haste), affectedByHaste: HASTED.includes(k as WWKey) },
+    ])
+  ) as Record<WWKey, ReturnType<typeof getSpell> & { affectedByHaste: boolean }>;

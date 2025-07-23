@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cdEnd } from '../lib/cooldown';
 import { cdSpeedAt } from '../lib/speed';
-import { hasteAt, BuffRec } from '../App';
+import { hasteAt, HasteBuff as BuffRec } from '../lib/haste';
 
 const ql: BuffRec[] = [{ key: 'AA_BD', start: 0, end: 6 }];
 

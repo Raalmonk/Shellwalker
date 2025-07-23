@@ -36,3 +36,24 @@ export function effTime(base: number, hastePct: number, floor = 0.75) {
   const t = base / (1 + hastePct);
   return base === 1 ? 1 : Math.max(t, floor); // 踏风 GCD 固定 1
 }
+
+export interface BuffEvent {
+  id: string;
+  name: string;
+  startMs: number;
+  endMs: number;
+  multiplier: number;
+  type: 'buff';
+}
+
+export function totalHasteAt(
+  rating: number,
+  buffs: BuffEvent[],
+  t: number,
+): number {
+  const gear = 1 + ratingToHaste(rating);
+  const buffMult = buffs
+    .filter(b => b.startMs <= t && t < b.endMs)
+    .reduce((m, b) => m * b.multiplier, 1);
+  return gear * buffMult;
+}

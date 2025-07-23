@@ -33,7 +33,7 @@ export default function App() {
   const [nextId, setNextId] = useState(1);
   const [showCD, setShowCD] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
-  interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; }
+  interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; source?: string; }
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
 
@@ -169,7 +169,7 @@ export default function App() {
 
     const baseCd = ability.cooldown ?? 0;
     const hasteMult = (ability as any).affectedByHaste
-      ? hasteAt(now, buffs, stats.haste)
+      ? hasteAt(now, [...buffs, ...blessingBuffs], stats.haste)
       : 1;
     const cdDur = baseCd / hasteMult;
     setCasts(cdObj => ({
@@ -225,6 +225,35 @@ export default function App() {
   const qlBuffs = buffs.filter(b => b.key.endsWith('_BD'));
   const otherBuffs = buffs.filter(b => !b.key.endsWith('_BD'));
 
+  const blessingBuffs = React.useMemo(() => {
+    const dragons = [...qlBuffs].sort((a, b) => a.start - b.start);
+    let nid = -1000;
+    const res: Buff[] = [];
+    const add = (start: number, end: number, source: string) => {
+      res.push({
+        id: nid--,
+        key: 'BLG',
+        start,
+        end,
+        label: t('祝福'),
+        group: 4,
+        multiplier: 1.15,
+        source,
+      } as Buff);
+    };
+    for (const d of dragons) {
+      add(d.start, d.end, d.key);
+      const t = d.end;
+      const active = res.filter(b => b.start <= t && t < b.end);
+      const other = active.find(b => b.source !== d.key && b.source !== 'POST');
+      if (other) other.end += 4;
+      const post = active.find(b => b.source === 'POST');
+      if (post) post.end += 4;
+      else if (active.length < 3) add(t, t + 4, 'POST');
+    }
+    return res;
+  }, [qlBuffs]);
+
   const qlItems: TLItem[] = (() => {
     const times = Array.from(new Set(qlBuffs.flatMap(b => [b.start, b.end]))).sort((a, b) => a - b);
     const res: TLItem[] = [];
@@ -246,8 +275,18 @@ export default function App() {
     return res;
   })();
 
+  const blessingItems: TLItem[] = blessingBuffs.map((b, i) => ({
+    id: 15000 + i,
+    group: 4,
+    start: b.start,
+    end: b.end,
+    label: '',
+    className: 'blessing',
+  }));
+
   const buffItems: TLItem[] = [
     ...qlItems,
+    ...blessingItems,
     ...otherBuffs.map(b => ({
       id: b.id,
       group: b.group,
@@ -259,7 +298,8 @@ export default function App() {
   ];
 
   const hasteItems: TLItem[] = (() => {
-    const hs = buffs.filter(b => b.multiplier);
+    const all = [...buffs, ...blessingBuffs];
+    const hs = all.filter(b => b.multiplier);
     const times = Array.from(new Set([
       0,
       ...hs.flatMap(b => [b.start, b.end]),
@@ -269,7 +309,7 @@ export default function App() {
     for (let i = 0; i < times.length - 1; i++) {
       const s = times[i];
       const e = times[i + 1];
-      const mult = hasteAt((s + e) / 2, buffs, stats.haste);
+      const mult = hasteAt((s + e) / 2, all, stats.haste);
       res.push({
         id: 20000 + i,
         group: 1,

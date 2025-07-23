@@ -45,10 +45,25 @@ body.light {
   border-color: #004400;
   color: #fff;
 }
+.vis-item.blessing .vis-item-content {
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
+}
 
 .vis-item.event-guide {
   background-color: #003377;
   border-color: #003377;
   color: #fff;
+}
+.vis-item.event-guide .vis-item-content {
+  padding: 0;
+  transform: translateX(0);
+}
+
+.vis-item.hide-text .vis-item-content {
+  visibility: hidden;
 }
 

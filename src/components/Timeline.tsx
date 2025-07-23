@@ -11,6 +11,7 @@ export interface TLItem {
   start: number; // start time in seconds
   end?: number; // optional end time in seconds
   label: string;
+  stacks?: number;
   ability?: string; // ability key, used for editing
   className?: string;
   pendingDelete?: boolean;
@@ -191,6 +192,7 @@ export const Timeline = ({
         end: it.end ? new Date(it.end * 1000) : undefined,
         type: it.end ? "range" : "box",
         className: [it.className, it.type === 'guide' ? 'event-guide' : ''].filter(Boolean).join(' '),
+        ...(it.stacks ? { stacks: it.stacks } : {}),
         style: it.type === 'guide' ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#fff` : undefined,
       })),
     );

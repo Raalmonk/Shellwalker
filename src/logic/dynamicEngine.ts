@@ -2,6 +2,7 @@ import { abilityById } from '../constants/abilities';
 import { selectTotalHasteAt as hasteAt, HasteBuff } from '../lib/haste';
 import { elapsedCdMs } from '../utils/cooldownIntegrate';
 import { hasCdSweep } from '../selectors/dragonSweep';
+import { dragonFactorAt } from '../selectors/dragons';
 
 export interface GearChange {
   start: number;
@@ -26,6 +27,7 @@ export interface RootState {
   buffs: Buff[];
   snapshotCds: SnapshotCd[];
   dynamicCasts: DynamicCast[];
+  channels: Record<string, { castTime: number }>;
 }
 
 export function createState(gearRating = 0): RootState {
@@ -35,6 +37,7 @@ export function createState(gearRating = 0): RootState {
     buffs: [],
     snapshotCds: [],
     dynamicCasts: [],
+    channels: {},
   };
 }
 
@@ -77,13 +80,16 @@ export function getEffectiveTickRate(
 }
 
 export function advanceTime(state: RootState, dt: number) {
-  const now = state.now + dt;
+  state.now += dt;
   for (const cd of state.snapshotCds) {
     cd.remainingMs = Math.max(0, cd.remainingMs - dt);
   }
   // prune finished snapshot cds
   state.snapshotCds = state.snapshotCds.filter(c => c.remainingMs > 0);
-  state.now = now;
+  // remove finished channels
+  for (const id of Object.keys(state.channels)) {
+    if (selectRemainingChannelMs(state, id) <= 0) delete state.channels[id];
+  }
 }
 
 export function cast(state: RootState, abilityId: string) {
@@ -109,6 +115,9 @@ export function cast(state: RootState, abilityId: string) {
       else state.dynamicCasts.push({ abilityId, castTime: state.now });
     }
   }
+  if (ability.channelDynamic) {
+    state.channels[abilityId] = { castTime: state.now };
+  }
 }
 
 export function selectRemainingCd(state: RootState, abilityId: string): number {
@@ -127,3 +136,15 @@ export function selectRemainingCd(state: RootState, abilityId: string): number {
 }
 
 export const getCooldown = selectRemainingCd;
+export const getChannel = selectRemainingChannelMs;
+
+export function selectRemainingChannelMs(state: RootState, id: string): number {
+  const cast = state.channels[id]?.castTime;
+  if (cast == null) return 0;
+  const ability = abilityById(id);
+  const haste = selectTotalHasteAt(state, state.now);
+  const rate = id === 'FoF' ? haste / dragonFactorAt(state, state.now) : haste;
+  const total = (ability.baseChannelMs ?? 0) / rate;
+  const elapsed = state.now - cast;
+  return Math.max(0, total - elapsed - 1);
+}

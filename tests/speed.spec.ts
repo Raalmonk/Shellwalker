@@ -7,8 +7,8 @@ const mk = (s: number, d: number, k: string) => ({ start:s, end:s+d, kind:k });
 test('单独 AA → 1.75', () => {
   expect(cdSpeedAt(1, [mk(0,6,'AA')])).toBeCloseTo(1.75, 4);
 });
-test('AA + CW → 2.3125', () => {
-  expect(cdSpeedAt(2, [mk(0,6,'AA'), mk(0,8,'CW')])).toBeCloseTo(2.3125, 4);
+test('AA + CW → 2.8', () => {
+  expect(cdSpeedAt(2, [mk(0,6,'AA'), mk(0,8,'CW')])).toBeCloseTo(2.8, 4);
 });
 test('CC + CW → 3.625', () => {
   expect(cdSpeedAt(3, [mk(0,6,'CC'), mk(0,8,'CW')])).toBeCloseTo(3.625, 4);

@@ -26,3 +26,10 @@ export function selectRemainingChannel(state: RootState, id: string) {
   }
   return Math.max(0, t - state.now);
 }
+
+export const makeRemainingChannelSelector = (id: string) =>
+  (s: RootState) => selectRemainingChannel(s, id);
+
+export const selectRemFoF = makeRemainingChannelSelector('FoF');
+export const selectRemCC = makeRemainingChannelSelector('CC');
+export const selectRemSW = makeRemainingChannelSelector('SW');

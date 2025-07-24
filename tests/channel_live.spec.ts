@@ -4,8 +4,7 @@ import {
   cast,
   advanceTime,
   setGearRating,
-  selectRemFoF,
-  selectRemCC,
+  selectRemainingChannel,
 } from '../src/logic/dynamicEngine';
 
 const RATING_50 = 35829; // ~= 50% haste
@@ -16,28 +15,28 @@ beforeEach(() => {
   s = createState();
 });
 
-it('FoF channel shrinks when haste buff added AFTER cast', () => {
+it('FoF channel shrinks after adding haste', () => {
   setGearRating(s, 0);
   cast(s, 'FoF');
-  advanceTime(s, 800);
-  const before = selectRemFoF(s);
+  advanceTime(s, 1000);
+  const before = selectRemainingChannel(s, 'FoF');
   cast(s, 'BL');
-  expect(selectRemFoF(s)).toBeLessThan(before);
+  expect(selectRemainingChannel(s, 'FoF')).toBeLessThan(before);
 });
 
-it('FoF reacts to dragonFactor 0.25 introduced mid-cast', () => {
+it('FoF reacts to dragonFactor 0.25', () => {
   cast(s, 'FoF');
-  advanceTime(s, 300);
-  const before = selectRemFoF(s);
+  advanceTime(s, 200);
+  const before = selectRemainingChannel(s, 'FoF');
   cast(s, 'SW');
   cast(s, 'AA');
-  expect(selectRemFoF(s)).toBeLessThan(before * 0.6);
+  expect(selectRemainingChannel(s, 'FoF')).toBeLessThan(before * 0.6);
 });
 
-it('CC channel responds to gear haste slider change', () => {
+it('CC channel reacts to gear haste change', () => {
   cast(s, 'CC');
-  advanceTime(s, 400);
-  const before = selectRemCC(s);
+  advanceTime(s, 500);
+  const before = selectRemainingChannel(s, 'CC');
   setGearRating(s, RATING_50);
-  expect(selectRemCC(s)).toBeLessThan(before);
+  expect(selectRemainingChannel(s, 'CC')).toBeLessThan(before);
 });

@@ -135,9 +135,4 @@ export function selectRemainingCd(state: RootState, abilityId: string): number {
 
 export const getCooldown = selectRemainingCd;
 
-export {
-  selectRemFoF,
-  selectRemCC,
-  selectRemSW,
-  makeRemainingChannelSelector,
-} from '../selectors/channel';
+export { selectRemainingChannel } from '../selectors/channel';

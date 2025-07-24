@@ -11,7 +11,6 @@ export interface TLItem {
   start: number; // start time in seconds
   end?: number; // optional end time in seconds
   label: string;
-  title?: string;
   stacks?: number;
   ability?: string; // ability key, used for editing
   className?: string;
@@ -190,7 +189,6 @@ export const Timeline = ({
         id: it.id,
         group: it.group,
         content: it.label,
-        title: it.title,
         start: new Date(it.start * 1000),
         end: it.end ? new Date(it.end * 1000) : undefined,
         type: it.end ? "range" : "box",

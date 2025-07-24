@@ -12,7 +12,7 @@ it('AA+SW overlap sweeps 1.8s per s', () => {
   cast(state, 'SW');
   cast(state, 'YH');
   advanceTime(state, 5000);
-  expect(getCooldown(state, 'YH')!.remainingMs).toBeCloseTo(30000 - 5000 * 1.8, 0);
+  expect(getCooldown(state, 'YH')).toBeCloseTo(30000 - 5000 * 1.8, 0);
 });
 
 it('haste added mid-cd accelerates', () => {
@@ -20,7 +20,7 @@ it('haste added mid-cd accelerates', () => {
   advanceTime(state, 5000);
   cast(state, 'BL');
   advanceTime(state, 5000);
-  expect(getCooldown(state, 'YH')!.remainingMs).toBeCloseTo(25000 - 5000 * 1.3, 0);
+  expect(getCooldown(state, 'YH')).toBeCloseTo(25000 - 5000 * 1.3, 0);
 });
 
 it('snapshot skills ignore retro haste', () => {
@@ -29,5 +29,5 @@ it('snapshot skills ignore retro haste', () => {
   advanceTime(state, 2000);
   cast(state, 'BL');
   advanceTime(state, 2000);
-  expect(getCooldown(state, 'FoF')!.remainingMs).toBeCloseTo(24000 / initialHaste - 4000, 0);
+  expect(getCooldown(state, 'FoF')).toBeCloseTo(24000 / initialHaste - 4000, 0);
 });

@@ -1,6 +1,7 @@
 import { abilityById } from '../constants/abilities';
 import { selectTotalHasteAt as hasteAt, HasteBuff } from '../lib/haste';
 import { elapsedCdMs } from '../utils/cooldownIntegrate';
+import { hasCdSweep } from '../selectors/dragonSweep';
 
 export interface GearChange {
   start: number;
@@ -58,8 +59,6 @@ export function dragonsOverlap(state: RootState, t: number) {
   return buffActive(state, 'AA', t) && buffActive(state, 'SW', t);
 }
 
-export const hasDragonSweep = dragonsOverlap;
-
 export function selectTotalHasteAt(state: RootState, t: number) {
   const rating = gearRatingAt(state, t);
   return hasteAt(state.buffs, rating, t);
@@ -72,9 +71,9 @@ export function getEffectiveTickRate(
 ): number {
   const ability = abilityById(abilityId);
   if (ability.snapshot) return 1;
-  const base = selectTotalHasteAt(state, now);
-  const sync = dragonsOverlap(state, now) ? 1.8 : 0;
-  return Math.max(base, sync);
+  const baseRate = selectTotalHasteAt(state, now);
+  const sweepRate = hasCdSweep(state, now) ? 1.8 : 0;
+  return Math.max(baseRate, sweepRate);
 }
 
 export function advanceTime(state: RootState, dt: number) {
@@ -93,6 +92,8 @@ export function cast(state: RootState, abilityId: string) {
     state.buffs.push({ key: 'AA', start: state.now, end: state.now + 6000 });
   } else if (abilityId === 'SW') {
     state.buffs.push({ key: 'SW', start: state.now, end: state.now + 8000 });
+  } else if (abilityId === 'CC') {
+    state.buffs.push({ key: 'CC', start: state.now, end: state.now + 6000 });
   } else if (abilityId === 'BL') {
     state.buffs.push({ key: 'BL', start: state.now, end: state.now + 40000, multiplier: 1.3 });
   }

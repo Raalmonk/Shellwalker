@@ -512,6 +512,9 @@ export default function App() {
               />
             </label>
             <div>{t('转好时间')}: {formatTime(endAt)}</div>
+            {it.end && it.end > time && (
+              <div>• Channel: {(it.end - time).toFixed(2)}s remaining</div>
+            )}
             {(() => {
               const prev = (casts[it.ability ?? ''] || [])
                 .filter(c => c.id !== selected && c.start < it.start)

@@ -16,6 +16,8 @@
     "src/combat/**/*.ts",
     "src/constants/**/*.ts",
     "src/logic/**/*.ts",
+    "src/selectors/**/*.ts",
+    "src/utils/**/*.ts",
     "src/__tests__/**/*.ts",
     "tests/**/*.ts"
   ]

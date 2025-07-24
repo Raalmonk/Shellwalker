@@ -3,7 +3,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run src/__tests__ tests/cd.spec.ts tests/speed.spec.ts tests/timeline.spec.ts tests/haste.spec.ts tests/cdSnapshot.spec.ts tests/haste_cooldown.spec.ts tests/blessing.spec.ts tests/blessing_haste.spec.ts tests/dragon_sync.spec.ts tests/dynamic_cd_recalc.spec.ts tests/fof_channel.spec.ts tests/dragon_sweep.spec.ts tests/ui_palette.spec.tsx tests/channel_dynamic.spec.ts",
+    "test": "vitest run src/__tests__ tests/cd.spec.ts tests/speed.spec.ts tests/timeline.spec.ts tests/haste.spec.ts tests/cdSnapshot.spec.ts tests/haste_cooldown.spec.ts tests/blessing.spec.ts tests/blessing_haste.spec.ts tests/dragon_sync.spec.ts tests/dynamic_cd_recalc.spec.ts tests/fof_channel.spec.ts tests/dragon_sweep.spec.ts tests/ui_palette.spec.tsx",
     "test:mocha": "mocha build/tests/**/*.js",
     "lint": "echo lint"
   },

@@ -1,6 +1,5 @@
-import { abilityById } from '../constants/abilities';
 import type { RootState } from '../logic/dynamicEngine';
-import { remainingChannelMs } from '../utils/channelIntegrate';
+import { remainingChannelTime } from '../utils/integrate';
 
 export const selectRemainingChannelMs = (
   state: RootState,
@@ -8,5 +7,5 @@ export const selectRemainingChannelMs = (
 ): number => {
   const cast = state.channels[id as keyof typeof state.channels]?.castTime;
   if (cast == null) return 0;
-  return remainingChannelMs(state, id, cast, state.now);
+  return remainingChannelTime(state, id as 'FoF' | 'CC' | 'SW', cast, state.now);
 };

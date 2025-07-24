@@ -315,13 +315,15 @@ export default function App() {
       const s = times[i];
       const e = times[i + 1];
       const mult = hasteAt((s + e) / 2, all, stats.haste);
+      const lbl = `${mult.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')}×`;
       res.push({
         id: 20000 + i,
         group: 1,
         start: s,
         end: e,
-        label: `${mult.toFixed(2)}×`,
+        label: lbl,
         className: 'haste',
+        title: lbl,
       });
     }
     return res;

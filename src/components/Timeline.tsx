@@ -16,6 +16,7 @@ export interface TLItem {
   className?: string;
   pendingDelete?: boolean;
   type?: string;
+  title?: string;
 }
 
 import { t } from '../i18n/en';
@@ -194,6 +195,7 @@ export const Timeline = ({
         type: it.end ? "range" : "box",
         className: [it.className, it.type === 'guide' ? 'event-guide' : ''].filter(Boolean).join(' '),
         ...(it.stacks ? { stacks: it.stacks } : {}),
+        ...(it.title ? { title: it.title } : {}),
         style: it.type === 'guide' ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#fff` : undefined,
       })),
     );

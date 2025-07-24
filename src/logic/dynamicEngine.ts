@@ -27,7 +27,10 @@ export interface RootState {
   snapshotCds: SnapshotCd[];
   dynamicCasts: DynamicCast[];
   channels: {
-    active: Record<string, number>;
+    FoF?: { castTime: number };
+    CC?: { castTime: number };
+    SW?: { castTime: number };
+    [key: string]: { castTime: number } | undefined;
   };
 }
 
@@ -38,7 +41,7 @@ export function createState(gearRating = 0): RootState {
     buffs: [],
     snapshotCds: [],
     dynamicCasts: [],
-    channels: { active: {} },
+    channels: {},
   };
 }
 
@@ -102,7 +105,7 @@ export function cast(state: RootState, abilityId: string) {
     state.buffs.push({ key: 'BL', start: state.now, end: state.now + 40000, multiplier: 1.3 });
   }
   if (ability.channelDynamic) {
-    state.channels.active[abilityId] = state.now;
+    state.channels[abilityId] = { castTime: state.now };
   }
   if (ability.cooldownMs > 0) {
     if (ability.snapshot) {
@@ -135,10 +138,4 @@ export function selectRemainingCd(state: RootState, abilityId: string): number {
 
 export const getCooldown = selectRemainingCd;
 
-export {
-  selectRemFoF,
-  selectRemCC,
-  selectRemSW,
-  makeRemainingChannelSelector,
-  selectRemainingChannel,
-} from '../selectors/channel';
+export { selectRemFoF, selectRemCC, selectRemSW, makeRemainingChannelSelector } from '../selectors/channel';

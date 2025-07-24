@@ -12,6 +12,7 @@ import { computeBlessingSegments } from './util/blessingSegments';
 import { SkillCast } from './types';
 import TPIcon from './Pics/TP.jpg';
 import { AbilityIcon } from './components/AbilityIcon';
+import { AbilityPalette } from './components/AbilityPalette';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
 
@@ -480,17 +481,7 @@ export default function App() {
         <button onClick={() => setShowCD(!showCD)} className="px-2 py-1 border rounded">
           {showCD ? t('隐藏CD') : t('显示CD')}
         </button>
-        {Object.keys(abilities).map(k => (
-          <div key={k} className="flex flex-col items-center w-4 h-4">
-            <button onClick={() => click(k as WWKey)}
-              className="w-4 h-4 bg-blue-500 text-white rounded relative overflow-hidden">
-              {k === 'TP'
-                ? <img src={TPIcon} alt={abilities[k as WWKey].name} className="w-full h-full" />
-                : <AbilityIcon abilityKey={k} />}
-            </button>
-            <span className="text-xs">{cdLabel(k as WWKey)}</span>
-          </div>
-        ))}
+        <AbilityPalette abilities={abilities} onUse={click} />
       </div>
 
       {selected !== null && (() => {

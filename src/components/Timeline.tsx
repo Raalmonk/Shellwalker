@@ -114,6 +114,7 @@ export const Timeline = ({
       {
         stack: false,
         height: "400px",
+        align: 'left',
         start: new Date(start * 1000),
         end: new Date(end * 1000),
         editable: { updateTime: true },

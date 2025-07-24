@@ -3,17 +3,16 @@ export interface Ability {
   cooldownMs: number;
   snapshot?: boolean;
   baseChannelMs?: number;
-  channelDynamic?: boolean;
 }
 
 export const ABILITIES: Record<string, Ability> = {
   AA: { id: 'AA', cooldownMs: 30000 },
-  SW: { id: 'SW', cooldownMs: 30000, baseChannelMs: 2000, channelDynamic: true },
+  SW: { id: 'SW', cooldownMs: 30000 },
   YH: { id: 'YH', cooldownMs: 30000 },
-  FoF: { id: 'FoF', cooldownMs: 24000, snapshot: true, baseChannelMs: 4000, channelDynamic: true },
+  FoF: { id: 'FoF', cooldownMs: 24000, snapshot: true, baseChannelMs: 4000 },
   RSK: { id: 'RSK', cooldownMs: 10000, snapshot: true },
   WU: { id: 'WU', cooldownMs: 25000, snapshot: true },
-  CC: { id: 'CC', cooldownMs: 90000, baseChannelMs: 1500, channelDynamic: true },
+  CC: { id: 'CC', cooldownMs: 90000 },
   BL: { id: 'BL', cooldownMs: 0 },
 };
 

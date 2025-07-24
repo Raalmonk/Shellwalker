@@ -1,7 +1,6 @@
 import { abilityById } from '../constants/abilities';
 import { selectTotalHasteAt as hasteAt, HasteBuff } from '../lib/haste';
 import { elapsedCdMs } from '../utils/cooldownIntegrate';
-import { elapsedChannelMs, channelDurationMs } from '../utils/channelIntegrate';
 import { hasCdSweep } from '../selectors/dragonSweep';
 
 export interface GearChange {
@@ -21,18 +20,12 @@ export interface DynamicCast {
   castTime: number;
 }
 
-export interface ChannelCast {
-  abilityId: string;
-  castTime: number;
-}
-
 export interface RootState {
   now: number;
   gear: GearChange[];
   buffs: Buff[];
   snapshotCds: SnapshotCd[];
   dynamicCasts: DynamicCast[];
-  channels: Record<string, ChannelCast | undefined>;
 }
 
 export function createState(gearRating = 0): RootState {
@@ -42,7 +35,6 @@ export function createState(gearRating = 0): RootState {
     buffs: [],
     snapshotCds: [],
     dynamicCasts: [],
-    channels: {},
   };
 }
 
@@ -105,9 +97,6 @@ export function cast(state: RootState, abilityId: string) {
   } else if (abilityId === 'BL') {
     state.buffs.push({ key: 'BL', start: state.now, end: state.now + 40000, multiplier: 1.3 });
   }
-  if (ability.channelDynamic) {
-    state.channels[abilityId] = { abilityId, castTime: state.now };
-  }
   if (ability.cooldownMs > 0) {
     if (ability.snapshot) {
       const rem = ability.cooldownMs / selectTotalHasteAt(state, state.now);
@@ -138,10 +127,3 @@ export function selectRemainingCd(state: RootState, abilityId: string): number {
 }
 
 export const getCooldown = selectRemainingCd;
-
-export function selectRemainingChannelMs(state: RootState, abilityId: string): number {
-  const cast = state.channels[abilityId]?.castTime;
-  if (cast == null) return 0;
-  const duration = channelDurationMs(state, abilityId, cast);
-  return Math.max(0, duration - (state.now - cast));
-}

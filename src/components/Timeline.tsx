@@ -123,13 +123,13 @@ export const Timeline = ({
           const snap = (ms: number) =>
             Math.round(ms / GRID_STEP_MS) * GRID_STEP_MS;
           const startMs = snap(item.start.valueOf());
-          const endMs = item.end ? snap(item.end.valueOf()) : undefined;
+          const endSec = item.end ? snap(item.end.valueOf()) / 1000 : undefined;
           item.start = new Date(startMs);
-          if (endMs !== undefined) item.end = new Date(endMs);
+          if (endSec !== undefined) item.end = new Date(endSec * 1000);
           moveRef.current?.(
             Number(item.id),
             startMs / 1000,
-            endMs !== undefined ? endMs / 1000 : undefined,
+            endSec,
           );
           callback(item);
         },

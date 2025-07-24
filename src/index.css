@@ -67,3 +67,21 @@ body.light {
   visibility: hidden;
 }
 
+
+.ability-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+.ability-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.ability-row::-webkit-scrollbar {
+  height: 6px;
+}

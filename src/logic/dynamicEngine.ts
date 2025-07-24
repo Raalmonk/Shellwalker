@@ -1,5 +1,5 @@
 import { abilityById } from '../constants/abilities';
-import { selectTotalHasteAt as hasteAt, HasteBuff } from '../lib/haste';
+import { selectTotalHasteAt as hasteAt, ratingToHaste, HasteBuff } from '../lib/haste';
 import { elapsedCdMs } from '../utils/cooldownIntegrate';
 import { hasCdSweep } from '../selectors/dragonSweep';
 
@@ -44,6 +44,21 @@ export function createState(gearRating = 0): RootState {
 
 export function setGearRating(state: RootState, rating: number) {
   state.gear.push({ start: state.now, rating });
+}
+
+export function ratingForHastePercent(pct: number): number {
+  let lo = 0;
+  let hi = 100000;
+  while (lo + 1 < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (ratingToHaste(mid) < pct) lo = mid;
+    else hi = mid;
+  }
+  return hi;
+}
+
+export function setGearHastePercent(state: RootState, pct: number) {
+  setGearRating(state, ratingForHastePercent(pct));
 }
 
 export function buffActive(state: RootState, key: string, t: number) {
@@ -135,4 +150,9 @@ export function selectRemainingCd(state: RootState, abilityId: string): number {
 
 export const getCooldown = selectRemainingCd;
 
-export { selectRemainingChannel } from '../selectors/channel';
+export {
+  selectRemainingChannel,
+  selectRemFoF,
+  selectRemCC,
+  selectRemSW,
+} from '../selectors/channel';

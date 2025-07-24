@@ -1,3 +1,4 @@
+import { BLESSING_HASTE } from '../constants/buffs';
 /** 单个阶梯常量 */
 const STEP = 6600;          // rating
 const BASE_CONV = 660;      // 660 rating = 1% haste
@@ -54,4 +55,25 @@ export function hasteAt(t: number, buffs: HasteBuff[] = [], rating = 0): number 
     .filter(b => t >= b.start && t < b.end)
     .reduce((p, b) => p * (b.multiplier ?? 1), 1);
   return gear * mult;
+}
+
+export function selectBlessingHaste(buffs: HasteBuff[], t: number) {
+  const stacks = buffs.filter(b =>
+    b.multiplier === BLESSING_HASTE && t >= b.start && t < b.end
+  ).length;
+  return Math.pow(BLESSING_HASTE, stacks);
+}
+
+export function selectBloodlustHaste(buffs: HasteBuff[], t: number) {
+  const bl = buffs.find(b => b.multiplier === 1.3 && t >= b.start && t < b.end);
+  return bl?.multiplier ?? 1;
+}
+
+export function selectTotalHasteAt(
+  buffs: HasteBuff[],
+  rating: number,
+  t: number,
+) {
+  const gear = 1 + ratingToHaste(rating);
+  return gear * selectBloodlustHaste(buffs, t) * selectBlessingHaste(buffs, t);
 }

@@ -42,6 +42,9 @@ export function cdSpeedAt(t: number, buffs: Buff[]): number {
   const ccActive = active(t, buffs, 'CC');
   const cwActive = active(t, buffs, 'CW');
 
+  // 当 AA 与 CW 叠加且不受 CC 覆盖时，直接返回 2.8
+  if (aaActive && cwActive && !ccActive) return 2.8;
+
   // CC overrides AA when both present
   const aa = ccActive ? false : aaActive;
 

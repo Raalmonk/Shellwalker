@@ -67,3 +67,8 @@ body.light {
   visibility: hidden;
 }
 
+.vis-item.ability-icon .vis-item-content {
+  padding: 0;
+  transform: translateX(0);
+}
+

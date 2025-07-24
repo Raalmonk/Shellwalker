@@ -137,6 +137,7 @@ export default function App() {
         label,
         ability: key,
         pendingDelete: false,
+        className: 'ability-icon',
         type: castDur > 0 ? 'guide' : undefined,
       },
     ]);

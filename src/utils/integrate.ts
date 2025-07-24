@@ -1,42 +1,42 @@
 import type { RootState } from '../logic/dynamicEngine';
 import { abilityById } from '../constants/abilities';
-import { selectTotalHasteAt } from '../selectors/haste';
+import { selectTotalHasteAt } from '../logic/dynamicEngine';
 import { dragonFactorAt } from '../selectors/dragons';
 
-export function elapsedChannelMs(
+export function integrateChannel(
   state: RootState,
-  abilityId: string,
+  abilityId: 'FoF' | 'CC' | 'SW',
   cast: number,
   now: number,
 ): number {
   const ability = abilityById(abilityId);
-  const dt = 100;
+  const dt = 50;
   let t = cast;
   let acc = 0;
-  while (t < now && acc < ability.baseChannelMs) {
+  while (t < now && acc < (ability.baseChannelMs ?? 0)) {
     const haste = selectTotalHasteAt(state, t);
-    const rate =
-      ability.id === 'FoF' ? haste / dragonFactorAt(state, t) : haste;
+    const dragon = abilityId === 'FoF' ? dragonFactorAt(state, t) : 1;
+    const rate = haste / dragon;
     acc += dt * rate;
     t += dt;
   }
-  return Math.min(acc, ability.baseChannelMs);
+  return acc;
 }
 
-export function remainingChannelMs(
+export function remainingChannelTime(
   state: RootState,
-  abilityId: string,
+  abilityId: 'FoF' | 'CC' | 'SW',
   cast: number,
   now: number,
 ): number {
   const ability = abilityById(abilityId);
-  const dt = 100;
+  const dt = 50;
   let t = cast;
   let acc = 0;
-  while (acc < ability.baseChannelMs) {
+  while (acc < (ability.baseChannelMs ?? 0)) {
     const haste = selectTotalHasteAt(state, t);
-    const rate =
-      ability.id === 'FoF' ? haste / dragonFactorAt(state, t) : haste;
+    const dragon = abilityId === 'FoF' ? dragonFactorAt(state, t) : 1;
+    const rate = haste / dragon;
     acc += dt * rate;
     t += dt;
     if (t - cast > 600000) break;

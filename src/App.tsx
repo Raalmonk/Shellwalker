@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste, hasteAt } from './lib/haste';
+import { calcDynamicEndTime } from './utils/calcDynamicEndTime';
 import { getEndAt } from './utils/getEndAt';
 import { GRID_STEP_MS, } from './constants/time';
 import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
@@ -55,20 +56,6 @@ export default function App() {
 
   const timeline = React.useMemo(() => buildTimeline(casts, buffs), [casts, buffs]);
 
-  const buffsAt = (t: number, extra: Buff[] = []) =>
-    [...buffs, ...extra].filter(b => t >= b.start && t < b.end);
-
-
-  const fofModAt = (t: number, extra: Buff[] = []) => {
-    const list = buffsAt(t, extra).map(b => b.key);
-    const hasAA = list.includes('AA_BD');
-    const hasSW = list.includes('SW_BD');
-    const hasCC = list.includes('CC_BD');
-    if (hasSW && (hasAA || hasCC)) return 0.25;
-    if (hasAA || hasSW || hasCC) return 0.5;
-    return 1;
-  };
-
   const isOnCD = (key: WWKey, start: number, exclude?: number) => {
     const ability = abilities[key];
     const recs = (casts[key] || []).filter(c => c.id !== String(exclude));
@@ -105,10 +92,16 @@ export default function App() {
   const click = (key: WWKey) => {
     const now = time;
     const ability = abilities[key];
-    const castDurBase = ability.castEff ?? 0;
-    const castDur = key === 'FoF'
-      ? castDurBase * fofModAt(now)
-      : castDurBase;
+    const baseCast = ability.cast ?? 0;
+    const endTime = calcDynamicEndTime(
+      now,
+      baseCast,
+      buffs,
+      blessingBuffs,
+      stats.haste,
+      key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
+    );
+    const castDur = endTime - now;
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
     const active = cds.filter(cd => getEndAt(cd, buffs) > now);

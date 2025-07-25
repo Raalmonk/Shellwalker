@@ -7,12 +7,12 @@ beforeEach(() => {
   state = createState();
 });
 
-it('AA+SW overlap sweeps 1.8s per s', () => {
+it('AA+SW overlap sweeps 3.0625× per s', () => {
   cast(state, 'AA');
   cast(state, 'SW');
   cast(state, 'YH');
   advanceTime(state, 5000);
-  expect(getCooldown(state, 'YH')).toBeCloseTo(30000 - 5000 * 1.8, 0);
+  expect(getCooldown(state, 'YH')).toBeCloseTo(30000 - 5000 * 3.0625, 0);
 });
 
 it('haste added mid-cd accelerates', () => {

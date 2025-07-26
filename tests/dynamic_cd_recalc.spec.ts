@@ -31,12 +31,12 @@ describe('dynamic cooldown recomputation', () => {
     expect(getCooldown(s, 'YH')).toBeLessThanOrEqual(original - 5000 * 0.3);
   });
 
-  it('AA+SW overlap sweep integrates 3.0625× section', () => {
+  it('AA+SW overlap sweep integrates 1.8× section', () => {
     cast(s, 'AA');
     cast(s, 'SW');
     cast(s, 'YH');
-    advanceTime(s, 10000);
-    const elapsed = 6000 * 3.0625 + 4000 * 1; // first 6s swept, rest normal
+    advanceTime(s, 25000);
+    const elapsed = 6000 * 1.8 + 19000 * 1; // AA 6s, rest normal
     expect(getCooldown(s, 'YH')).toBeCloseTo(30000 - elapsed, 0);
   });
 });

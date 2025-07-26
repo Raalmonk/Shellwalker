@@ -14,11 +14,30 @@ import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
 import { computeBlessingSegments } from './util/blessingSegments';
 import { SkillCast } from './types';
-import TPIcon from './Pics/TP.jpg';
 import { AbilityIcon } from './components/AbilityIcon';
 import { AbilityPalette } from './components/AbilityPalette';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
+
+const getOriginalChiCost = (key: WWKey): number => {
+  switch (key) {
+    case 'TP':   return 0;
+    case 'BOK':  return 1;
+    case 'RSK':  return 2;
+    case 'FoF':  return 3;
+    case 'SCK':  return 2;
+    case 'AA':   return 2;
+    case 'BLK_HL': return 1;
+    case 'SCK_HL': return 2;
+    default:      return 0;
+  }
+};
+
+const getActualChiCost = (key: WWKey, buffs: {key: string; end: number;}[], now: number): number => {
+  const orig = getOriginalChiCost(key);
+  const sefActive = buffs.some(b => b.key === 'SEF' && b.end > now);
+  return sefActive && orig > 0 ? Math.max(0, orig - 1) : orig;
+};
 
 export interface BuffRec { key: string; start: number; end: number; multiplier?: number }
 
@@ -95,6 +114,9 @@ export default function App() {
     WU: 8,
     TP: 9,
     BOK: 9,
+    SCK: 9,
+    SCK_HL: 9,
+    BLK_HL: 9,
     BL: 2,
   };
 
@@ -110,35 +132,13 @@ export default function App() {
 
     const baseCast = ability.cast ?? 0;
 
-    let chiChange = 0;
-    switch (key) {
-      case 'TP':
-        chiChange = 2;
-        break;
-      case 'BOK':
-        chiChange = -1;
-        break;
-      case 'BLK_HL':
-        chiChange = 1;
-        break;
-      case 'SCK':
-        chiChange = -2;
-        break;
-      case 'RSK':
-        chiChange = -2;
-        break;
-      case 'FoF':
-        chiChange = -3;
-        break;
-      case 'AA':
-        chiChange = -2;
-        break;
-      case 'SEF':
-        chiChange = 2;
-        break;
-    }
+    const originalCost = getOriginalChiCost(key);
+    const actualCost = getActualChiCost(key, buffs, now);
+    let chiGain = 0;
+    if (key === 'TP') chiGain = 2;
+    else if (key === 'SEF') chiGain = 2;
 
-    if (chi + chiChange < 0) {
+    if (actualCost > 0 && chi < actualCost) {
       alert('Chi不足，无法施放技能');
       return;
     }
@@ -214,16 +214,29 @@ export default function App() {
       });
     }
 
-    if (chiChange < 0) {
-      dispatch(spendChi(-chiChange));
-      const idx = buffs.findIndex(b => b.key === 'SEF' && b.end > now);
-      if (idx !== -1) {
-        const added = 0.25 * (-chiChange);
-        setBuffs(bs => bs.map((b, i) => i === idx ? { ...b, end: b.end + added } : b));
+    let extension = 0;
+    const sefActive = buffs.find(b => b.key === 'SEF' && b.end > now);
+
+    if (actualCost > 0) {
+      dispatch(spendChi(actualCost));
+      if (sefActive && originalCost > 0) {
+        extension = 0.25 * originalCost;
+        setBuffs(bs =>
+          bs.map(b =>
+            b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
+          )
+        );
       }
-    } else if (chiChange > 0) {
-      dispatch(gainChi(chiChange));
     }
+    if (chiGain > 0) {
+      dispatch(gainChi(chiGain));
+    }
+
+    console.log(
+      `[${now.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
+      (extension > 0 ? `, SEF extended by ${extension.toFixed(2)}s` : '') +
+      `, Chi now: ${Math.max(0, Math.min(6, chi - actualCost + chiGain))}`
+    );
 
 
     const baseCd = ability.cooldown ?? 0;

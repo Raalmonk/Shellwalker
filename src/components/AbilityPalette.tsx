@@ -2,7 +2,6 @@ import React from 'react';
 import { AbilityIcon } from './AbilityIcon';
 import { TIMELINE_ROW_ORDER, TimelineRow } from '../constants/timelineRows';
 import { wwData, WWKey } from '../jobs/windwalker';
-import TPIcon from '../Pics/TP.jpg';
 
 interface Props {
   abilities: ReturnType<typeof wwData>;
@@ -42,11 +41,7 @@ export const AbilityPalette = ({ abilities, onUse }: Props) => (
               }}
               className="w-8 h-8 bg-blue-500 text-white rounded relative overflow-hidden"
             >
-              {k === 'TP' ? (
-                <img src={TPIcon} alt={abilities[k as WWKey].name} className="w-full h-full" />
-              ) : (
-                <AbilityIcon abilityKey={k} />
-              )}
+              <AbilityIcon abilityKey={k} />
             </button>
           ))}
       </div>

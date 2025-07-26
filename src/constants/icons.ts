@@ -8,6 +8,9 @@ import AA from '../assets/abilityIcons/inv_hand_1h_artifactskywall_d_01.jpg';
 import SEF from '../assets/abilityIcons/spell_nature_giftofthewild.jpg';
 import FoF from '../assets/abilityIcons/monk_ability_fistoffury.jpg';
 import BL from '../assets/abilityIcons/spell_orc_berserker.jpg';
+import SCK from '../assets/abilityIcons/ability_monk_cranekick_new.jpg';
+import SCK_HL from '../assets/abilityIcons/ability_monk_cranekick_new_HL.jpg';
+import BLK_HL from '../assets/abilityIcons/ability_monk_roundhousekick_HL.jpg';
 
 export const ABILITY_ICON_MAP: Record<string, {src: string; abbr: string}> = {
   WU:  {src: WU,  abbr: 'WU'},
@@ -20,4 +23,7 @@ export const ABILITY_ICON_MAP: Record<string, {src: string; abbr: string}> = {
   SEF: {src: SEF, abbr: 'SEF'},
   FoF: {src: FoF, abbr: 'FoF'},
   BL:  {src: BL,  abbr: 'BL'},
+  SCK: {src: SCK, abbr: 'SCK'},
+  SCK_HL: {src: SCK_HL, abbr: 'SCKH'},
+  BLK_HL: {src: BLK_HL, abbr: 'BLK'},
 };

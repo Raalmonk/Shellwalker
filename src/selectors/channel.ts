@@ -13,19 +13,13 @@ export function dragonFactorAt(state: RootState, t: number) {
 export function selectRemainingChannel(state: RootState, id: string) {
   const cast = state.channels.active[id];
   if (cast == null) return 0;
-  const ability = abilityById(id);
-  const base = ability.baseChannelMs ?? 0;
+  const base = abilityById(id).baseChannelMs ?? 0;
   const dt = 50;
   let t = cast;
   let done = 0;
   while (done < base) {
     const haste = selectTotalHasteAt(state, t);
-    const rate =
-      id === 'FoF'
-        ? haste / dragonFactorAt(state, t)
-        : ability.channelDynamic
-          ? haste
-          : 0;
+    const rate = id === 'FoF' ? haste / dragonFactorAt(state, t) : haste;
     done += dt * rate;
     t += dt;
     if (t - cast > 600000) break;

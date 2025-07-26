@@ -19,6 +19,36 @@ import { AbilityPalette } from './components/AbilityPalette';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
 
+const getOriginalChiCost = (key: WWKey): number => {
+  switch (key) {
+    case 'TP':   return 0;
+    case 'BOK':  return 1;
+    case 'RSK':  return 2;
+    case 'FoF':  return 3;
+    case 'SCK':  return 2;
+    case 'AA':   return 2;
+    case 'BLK_HL': return 1;
+    case 'SCK_HL': return 2;
+    default:      return 0;
+  }
+};
+
+const getActualChiCost = (key: WWKey, sefActive: boolean): number => {
+  if (key === 'SCK_HL') return 0;
+  const base = getOriginalChiCost(key);
+  return sefActive ? Math.max(base - 1, 0) : base;
+};
+
+const SEF_EXTENSION_COST_MAP: Record<WWKey, number> = {
+  BLK_HL: 1,
+  SCK_HL: 2,
+  RSK: 2,
+  FoF: 3,
+  AA: 2,
+  SCK: 2,
+  BOK: 1,
+  TP: 0,
+};
 
 interface CalcBuff {
   id: number;
@@ -98,21 +128,21 @@ function recomputeTimeline(
     });
     const notReady = overlaps.length >= maxCharges;
     const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > it.start);
-    const origCost = getOriginalChiCost(key);
-    const actualCost = getActualChiCost(key, buffs, it.start);
-    const lowChi = chi < actualCost;
+    const sefActive = !!sefActiveBuff;
+    const lowChi = chi < getActualChiCost(key, sefActive);
     if (idx >= 0) {
       let cls = (items[idx].className || '').replace('warning', '').trim();
       if (notReady || lowChi) cls = (cls + ' warning').trim();
       items[idx] = { ...items[idx], className: cls };
     }
 
-    const chiGain = key === 'TP' ? 2 : key === 'SEF' ? 2 : 0;
+    const actualCost = getActualChiCost(key, sefActive);
+    const chiGain = key === 'TP' ? 2 : key === 'SEF' ? 2 : key === 'BLK_HL' ? 1 : 0;
     if (actualCost > 0) chi = Math.max(0, chi - actualCost);
-    if (key === 'BLK_HL') chi += 1;
     chi = Math.min(6, chi + chiGain);
 
-    if (sefActiveBuff && origCost > 0) sefActiveBuff.end += 0.25 * origCost;
+    const sefChi = SEF_EXTENSION_COST_MAP[key] || 0;
+    if (sefActiveBuff && sefChi > 0) sefActiveBuff.end += 0.25 * sefChi;
 
     if (key === 'AA') {
       buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 5, src: it.id });
@@ -240,11 +270,12 @@ export default function App() {
 
     const originalCost = getOriginalChiCost(key);
     const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > now);
-    const actualCost = getActualChiCost(key, buffs, now);
+    const sefActive = !!sefActiveBuff;
+    const actualCost = getActualChiCost(key, sefActive);
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
-    
+    else if (key === 'BLK_HL') chiGain = 1;
 
     if (actualCost > 0 && chi < actualCost) {
       alert('Chi不足，无法施放技能');
@@ -327,8 +358,9 @@ export default function App() {
     if (actualCost > 0) {
       dispatch(spendChi(actualCost));
     }
-    if (sefActiveBuff && originalCost > 0) {
-      extension = 0.25 * originalCost;
+    const sefChiCount = SEF_EXTENSION_COST_MAP[key] || 0;
+    if (sefActiveBuff && sefChiCount > 0) {
+      extension = 0.25 * sefChiCount;
       setBuffs(bs =>
         bs.map(b =>
           b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
@@ -337,9 +369,6 @@ export default function App() {
     }
     if (chiGain > 0) {
       dispatch(gainChi(chiGain));
-    }
-    if (key === 'BLK_HL') {
-      dispatch(gainChi(1));
     }
 
     console.log(

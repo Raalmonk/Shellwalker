@@ -33,6 +33,13 @@ export const ABILITIES: Record<string, Ability> = {
     cooldownMs: 0,
     row: 'minorFiller',
   },
+  BOK: {
+    id: 'BOK',
+    name: 'Blackout Kick',
+    iconKey: 'BOK',
+    cooldownMs: 0,
+    row: 'minorFiller',
+  },
   SCK: {
     id: 'SCK',
     name: 'Spinning Crane Kick',

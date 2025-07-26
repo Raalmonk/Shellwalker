@@ -45,7 +45,7 @@
     },
     "range": 5,
     "gcd": 1.5,
-    "cooldown": 3
+    "cooldown": 0
   },
   {
     "name": "Flying Serpent Kick",

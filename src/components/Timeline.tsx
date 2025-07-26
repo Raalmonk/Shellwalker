@@ -20,7 +20,7 @@ export interface TLItem {
 }
 
 import { t } from '../i18n/en';
-import { GUIDE_COLOR } from '../constants/colors';
+import { GUIDE_COLOR, GUIDE_BORDER_COLOR } from '../constants/colors';
 
 const groups = [
   'Haste',
@@ -196,7 +196,9 @@ export const Timeline = ({
         className: [it.className, it.type === 'guide' ? 'event-guide' : ''].filter(Boolean).join(' '),
         ...(it.stacks ? { stacks: it.stacks } : {}),
         ...(it.title ? { title: it.title } : {}),
-        style: it.type === 'guide' ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#fff` : undefined,
+        style: it.type === 'guide'
+          ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_BORDER_COLOR};color:#fff`
+          : undefined,
       })),
     );
   }, [items]);

@@ -58,8 +58,8 @@ body.light {
 }
 
 .vis-item.event-guide {
-  background-color: #003377;
-  border-color: #003377;
+  background-color: rgba(96, 160, 255, 0.4);
+  border-color: rgba(96, 160, 255, 0.6);
   color: #fff;
 }
 .vis-item.event-guide .vis-item-content {

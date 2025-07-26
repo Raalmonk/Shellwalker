@@ -20,6 +20,9 @@ const ROW_MAP: Record<WWKey, TimelineRow> = {
   WU: 'majorFiller',
   TP: 'minorFiller',
   BOK: 'minorFiller',
+  SCK: 'minorFiller',
+  SCK_HL: 'minorFiller',
+  BLK_HL: 'minorFiller',
   BL: 'majorCd', // put BL with major cds
 };
 

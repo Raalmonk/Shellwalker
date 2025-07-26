@@ -297,5 +297,31 @@
     ],
     "gcd": 1,
     "cooldown": 90
+  },
+  {
+    "name": "SCK",
+    "id": 999996,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cast": 1.5
+  },
+  {
+    "name": "SCK_HL",
+    "id": 999995,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cast": 1.5
+  },
+  {
+    "name": "BLK_HL",
+    "id": 999997,
+    "effects": [
+      {}
+    ],
+    "gcd": 1
   }
 ]

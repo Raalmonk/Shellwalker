@@ -26,4 +26,22 @@ describe('AbilityPalette', () => {
     rows.forEach(row => expect(row.classList.contains('ability-row')).toBe(true));
     root.unmount();
   });
+
+  it('shows BLK_HL, SCK, SCK_HL in minorFiller row', async () => {
+    const abilities = wwData(0);
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    const root = createRoot(div);
+    await act(async () => {
+      root.render(<AbilityPalette abilities={abilities} onUse={() => {}} />);
+    });
+    const minorRow = div.querySelector('[data-row="minorFiller"]');
+    expect(minorRow).toBeTruthy();
+    const imgs = minorRow!.querySelectorAll('img');
+    const alts = Array.from(imgs).map(i => i.getAttribute('alt'));
+    expect(alts).toContain('BLK_HL');
+    expect(alts).toContain('SCK');
+    expect(alts).toContain('SCK_HL');
+    root.unmount();
+  });
 });

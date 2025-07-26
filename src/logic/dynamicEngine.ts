@@ -1,7 +1,6 @@
 import { abilityById } from '../constants/abilities';
 import { selectTotalHasteAt as hasteAt, ratingToHaste, HasteBuff } from '../lib/haste';
 import { elapsedCdMs } from '../utils/cooldownIntegrate';
-import { hasCdSweep } from '../selectors/dragonSweep';
 
 export interface GearChange {
   start: number;
@@ -90,9 +89,16 @@ export function getEffectiveTickRate(
 ): number {
   const ability = abilityById(abilityId);
   if (ability.snapshot) return 1;
-  const baseRate = selectTotalHasteAt(state, now);
-  const sweepRate = hasCdSweep(state, now) ? 1.8 : 0;
-  return Math.max(baseRate, sweepRate);
+  const base = selectTotalHasteAt(state, now);
+
+  const sw = buffActive(state, 'SW', now);
+  if (sw) {
+    const aa = buffActive(state, 'AA', now);
+    const cc = buffActive(state, 'CC', now);
+    const sweep = cc ? 4.375 : aa ? 3.0625 : 0;
+    return Math.max(base, sweep);
+  }
+  return base;
 }
 
 export function advanceTime(state: RootState, dt: number) {

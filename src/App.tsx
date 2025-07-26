@@ -33,9 +33,10 @@ const getOriginalChiCost = (key: WWKey): number => {
   }
 };
 
-const getActualChiCost = (key: WWKey): number => {
+const getActualChiCost = (key: WWKey, sefActive: boolean): number => {
   if (key === 'SCK_HL') return 0;
-  return getOriginalChiCost(key);
+  const base = getOriginalChiCost(key);
+  return sefActive ? Math.max(base - 1, 0) : base;
 };
 
 const SEF_EXTENSION_COST_MAP: Record<WWKey, number> = {
@@ -126,21 +127,22 @@ function recomputeTimeline(
       return it.start < e && e > c.start;
     });
     const notReady = overlaps.length >= maxCharges;
-    const lowChi = chi < getActualChiCost(key);
+    const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > it.start);
+    const sefActive = !!sefActiveBuff;
+    const lowChi = chi < getActualChiCost(key, sefActive);
     if (idx >= 0) {
       let cls = (items[idx].className || '').replace('warning', '').trim();
       if (notReady || lowChi) cls = (cls + ' warning').trim();
       items[idx] = { ...items[idx], className: cls };
     }
 
-    const actualCost = getActualChiCost(key);
+    const actualCost = getActualChiCost(key, sefActive);
     const chiGain = key === 'TP' ? 2 : key === 'SEF' ? 2 : key === 'BLK_HL' ? 1 : 0;
     if (actualCost > 0) chi = Math.max(0, chi - actualCost);
     chi = Math.min(6, chi + chiGain);
 
-    const sefActive = buffs.find(b => b.key === 'SEF' && b.end > it.start);
     const sefChi = SEF_EXTENSION_COST_MAP[key] || 0;
-    if (sefActive && sefChi > 0) sefActive.end += 0.25 * sefChi;
+    if (sefActiveBuff && sefChi > 0) sefActiveBuff.end += 0.25 * sefChi;
 
     if (key === 'AA') {
       buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 5, src: it.id });
@@ -267,7 +269,9 @@ export default function App() {
     const baseCast = ability.cast ?? 0;
 
     const originalCost = getOriginalChiCost(key);
-    const actualCost = getActualChiCost(key);
+    const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > now);
+    const sefActive = !!sefActiveBuff;
+    const actualCost = getActualChiCost(key, sefActive);
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
@@ -350,13 +354,12 @@ export default function App() {
     }
 
     let extension = 0;
-    const sefActive = buffs.find(b => b.key === 'SEF' && b.end > now);
 
     if (actualCost > 0) {
       dispatch(spendChi(actualCost));
     }
     const sefChiCount = SEF_EXTENSION_COST_MAP[key] || 0;
-    if (sefActive && sefChiCount > 0) {
+    if (sefActiveBuff && sefChiCount > 0) {
       extension = 0.25 * sefChiCount;
       setBuffs(bs =>
         bs.map(b =>
@@ -503,14 +506,22 @@ export default function App() {
   const buffItems: TLItem[] = [
     ...qlItems,
     ...blessingItems,
-    ...otherBuffs.map(b => ({
-      id: b.id,
-      group: b.group,
-      start: b.start,
-      end: b.end,
-      label: b.label,
-      className: b.key === 'SEF' ? 'buff sef-buff' : 'buff',
-    })),
+    ...otherBuffs.map(b => {
+      const item: TLItem = {
+        id: b.id,
+        group: b.group,
+        start: b.start,
+        end: b.end,
+        label: b.label,
+        className: b.key === 'SEF' ? 'buff sef-buff' : 'buff',
+      };
+      if (b.key === 'SEF') {
+        const ext = b.end - b.start - 15;
+        const msg = `SEF extended by ${ext > 0 ? ext.toFixed(1) : '0'}s from Chi usage`;
+        (item as any).title = msg;
+      }
+      return item;
+    }),
   ];
 
   const hasteItems: TLItem[] = (() => {

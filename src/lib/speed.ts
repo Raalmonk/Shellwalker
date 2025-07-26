@@ -42,19 +42,15 @@ export function cdSpeedAt(t: number, buffs: Buff[]): number {
   const ccActive = active(t, buffs, 'CC');
   const cwActive = active(t, buffs, 'CW');
 
-  // 当 AA 与 CW 叠加且不受 CC 覆盖时，直接返回 2.8
-  if (aaActive && cwActive && !ccActive) return 2.8;
+  if (cwActive) {
+    if (ccActive) return 4.375;
+    if (aaActive) return 3.0625;
+    return 1.75;
+  }
 
-  // CC overrides AA when both present
-  const aa = ccActive ? false : aaActive;
-
-  let extra = 0;
-  if (cwActive && ccActive) extra = 1.5 * 1.75;
-  else if (cwActive && aa) extra = 0.75 * 1.75;
-  else if (ccActive) extra = 1.5;
-  else if (aa || cwActive) extra = 0.75;
-
-  return 1 + extra;
+  if (ccActive) return 2.5;
+  if (aaActive) return 1.75;
+  return 1;
 }
 
 // END_PATCH

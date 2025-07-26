@@ -305,25 +305,11 @@ export default function App() {
       viewStart + duration,
     ])).sort((a, b) => a - b);
     const res: TLItem[] = [];
-    const sweepAt = (t: number) => {
-      const sw = buffs.some(b => b.key === 'SW_BD' && b.start <= t && t < b.end);
-      const aa = buffs.some(b => b.key === 'AA_BD' && b.start <= t && t < b.end);
-      const cc = buffs.some(b => b.key === 'CC_BD' && b.start <= t && t < b.end);
-      if (!sw) return 0;
-      if (aa && !cc) return 3.0625;
-      if (cc && !aa) return 4.375;
-      if (aa && cc) return Math.max(3.0625, 4.375);
-      return 0;
-    };
     for (let i = 0; i < times.length - 1; i++) {
       const s = times[i];
       const e = times[i + 1];
-      const mid = (s + e) / 2;
-      const mult = hasteAt(mid, all, stats.haste);
-      const sweep = sweepAt(mid);
-      const tick = Math.max(mult, sweep);
+      const mult = hasteAt((s + e) / 2, all, stats.haste);
       const lbl = `${mult.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')}×`;
-      const title = tick > mult ? `Tick ${tick.toFixed(2)}×` : lbl;
       res.push({
         id: 20000 + i,
         group: 1,
@@ -331,7 +317,7 @@ export default function App() {
         end: e,
         label: lbl,
         className: 'haste',
-        title,
+        title: lbl,
       });
     }
     return res;

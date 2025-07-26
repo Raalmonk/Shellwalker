@@ -16,8 +16,6 @@ import { AbilityIcon } from './components/AbilityIcon';
 import { AbilityPalette } from './components/AbilityPalette';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
-import { useAppDispatch, useAppSelector } from './store';
-import { gainChi, spendChi } from './chiSlice';
 
 export interface BuffRec { key: string; start: number; end: number; multiplier?: number }
 
@@ -38,11 +36,9 @@ export default function App() {
   const [nextId, setNextId] = useState(1);
   const [showCD, setShowCD] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
-  interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; source?: string; className?: string; }
+  interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; source?: string; }
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
-  const chi = useAppSelector(state => state.chi.value);
-  const dispatch = useAppDispatch();
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -106,13 +102,6 @@ export default function App() {
       key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
     );
     const castDur = endTime - now;
-    if (key === 'SEF') {
-      const activeSEF = buffs.find(b => b.key === 'SEF' && b.end > now);
-      if (activeSEF) {
-        alert('风火雷电正在持续');
-        return;
-      }
-    }
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
     const active = cds.filter(cd => getEndAt(cd, buffs) > now);
@@ -123,22 +112,6 @@ export default function App() {
     }
     if (isChanneling(now)) {
       alert(t('引导中不能施放其他技能'));
-      return;
-    }
-    let chiChange = 0;
-    switch (key) {
-      case 'TP': chiChange = 2; break;
-      case 'BOK': chiChange = -1; break;
-      case 'BLK_HL': chiChange = 1; break;
-      case 'SCK': chiChange = -2; break;
-      case 'RSK': chiChange = -2; break;
-      case 'FoF': chiChange = -3; break;
-      case 'AA': chiChange = -2; break;
-      case 'SEF': chiChange = 2; break;
-      default: chiChange = ability.power_cost?.chi ? -ability.power_cost.chi : 0;
-    }
-    if (chiChange < 0 && chi < -chiChange) {
-      alert('Chi不足，无法施放技能');
       return;
     }
     const icon = ABILITY_ICON_MAP[key];
@@ -168,9 +141,6 @@ export default function App() {
     } else if (key === 'SW') {
       extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 5 } as any);
       setNextBuffId(nextBuffId - 1);
-    } else if (key === 'SEF') {
-      extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF Buff', group: 3, className: 'buff-sef' } as any);
-      setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
       // convert AA buff if active
@@ -192,40 +162,24 @@ export default function App() {
       });
     }
 
-    if (chiChange !== 0) {
-      if (chiChange > 0) dispatch(gainChi(chiChange));
-      else dispatch(spendChi(-chiChange));
-      const consume = -Math.min(chiChange, 0);
-      if (consume > 0) {
-        setBuffs(bs => bs.map(b =>
-          b.key === 'SEF' && b.end > now ? { ...b, end: b.end + consume * 0.25 } : b
-        ));
-      }
-    }
-
     const baseCd = ability.cooldown ?? 0;
     const hasteMult = (ability as any).affectedByHaste
       ? hasteAt(now, [...buffs, ...blessingBuffs], stats.haste)
       : 1;
     const cdDur = baseCd / hasteMult;
-    setCasts(cdObj => {
-      const out: Record<string, SkillCast[]> = { ...cdObj };
-      if (key === 'SEF') {
-        out['RSK'] = (cdObj['RSK'] || []).filter(c => getEndAt(c, buffs) <= now);
-      }
-      out[key] = [
-        ...(cdObj[key] || []),
+    setCasts(cdObj => ({
+      ...cdObj,
+      [key]: [
+        ...cds,
         {
           id: String(id),
           start: now,
           base: cdDur,
           haste: hasteMult,
         },
-      ];
-      return out;
-    });
-    const advance = key === 'SEF' ? 0.001 : (castDur > 0 ? castDur : 1);
-    setTime(now + advance);
+      ],
+    }));
+    setTime(now + (castDur > 0 ? castDur : 1));
   };
 
   // vertical lines showing when a cooldown finishes
@@ -338,7 +292,7 @@ export default function App() {
       start: b.start,
       end: b.end,
       label: b.label,
-      className: b.className ?? 'buff',
+      className: 'buff',
     })),
   ];
 
@@ -504,7 +458,6 @@ export default function App() {
 
       <div className="space-y-1 text-sm">
         <div>Haste Rating: {stats.haste} ({(ratingToHaste(stats.haste) * 100).toFixed(2)}%)</div>
-        <div>Chi: {chi}</div>
         <div>
           SEF Charges:
           {Math.max(

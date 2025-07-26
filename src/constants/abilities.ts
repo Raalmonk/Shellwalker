@@ -21,19 +21,6 @@ export const ABILITIES: Record<string, Ability> = {
   WU: { id: 'WU', cooldownMs: 25000, snapshot: true },
   CC: { id: 'CC', cooldownMs: 90000, baseChannelMs: 1500, channelDynamic: true },
   BL: { id: 'BL', cooldownMs: 0 },
-  SCK: {
-    id: 'SCK',
-    cooldownMs: 0,
-    baseChannelMs: 1500,
-    channelDynamic: true,
-  },
-  SCK_HL: {
-    id: 'SCK_HL',
-    cooldownMs: 0,
-    baseChannelMs: 1500,
-    channelDynamic: true,
-  },
-  BLK_HL: { id: 'BLK_HL', cooldownMs: 0 },
 };
 
 export function abilityById(id: string): Ability {

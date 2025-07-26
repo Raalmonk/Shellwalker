@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from './store';
-import { gainChi, spendChi, resetChi } from './store/chiSlice';
+import { gainChi, spendChi, resetChi, setChi } from './store/chiSlice';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste, hasteAt } from './lib/haste';
@@ -33,11 +33,145 @@ const getOriginalChiCost = (key: WWKey): number => {
   }
 };
 
-const getActualChiCost = (key: WWKey, buffs: {key: string; end: number;}[], now: number): number => {
-  const orig = getOriginalChiCost(key);
-  const sefActive = buffs.some(b => b.key === 'SEF' && b.end > now);
-  return sefActive && orig > 0 ? Math.max(0, orig - 1) : orig;
+const getActualChiCost = (key: WWKey): number => {
+  if (key === 'SCK_HL') return 0;
+  return getOriginalChiCost(key);
 };
+
+const SEF_EXTENSION_COST_MAP: Record<WWKey, number> = {
+  BLK_HL: 1,
+  SCK_HL: 2,
+  RSK: 2,
+  FoF: 3,
+  AA: 2,
+  SCK: 2,
+  BOK: 1,
+  TP: 0,
+};
+
+interface CalcBuff {
+  id: number;
+  key: string;
+  start: number;
+  end: number;
+  label: string;
+  group: number;
+  src?: number;
+  multiplier?: number;
+  source?: string;
+}
+
+function computeBlessingBuffs(dragons: CalcBuff[]): CalcBuff[] {
+  const sorted = [...dragons].sort((a, b) => a.start - b.start);
+  let nid = -1000;
+  const res: CalcBuff[] = [];
+  const add = (start: number, end: number, source: string) => {
+    res.push({
+      id: nid--,
+      key: 'BLG',
+      start,
+      end,
+      label: t('祝福'),
+      group: 4,
+      multiplier: 1.15,
+      source,
+    });
+  };
+  for (const d of sorted) {
+    add(d.start, d.end, d.key);
+    const tEnd = d.end;
+    const active = res.filter(b => b.start <= tEnd && tEnd < b.end);
+    const other = active.find(b => b.source !== d.key && b.source !== 'POST');
+    if (other) other.end += 4;
+    const post = active.find(b => b.source === 'POST');
+    if (post) post.end += 4;
+    else if (active.length < 3) add(tEnd, tEnd + 4, 'POST');
+  }
+  return res;
+}
+
+function recomputeTimeline(
+  rawItems: TLItem[],
+  haste: number,
+): { items: TLItem[]; buffs: CalcBuff[]; casts: Record<string, SkillCast[]>; chi: number } {
+  const abilities = wwData(haste);
+  const items = rawItems.map(it => ({ ...it }));
+  const abilityItems = items.filter(i => i.ability) as TLItem[];
+  abilityItems.sort((a, b) => a.start - b.start);
+  let chi = 2;
+  let buffs: CalcBuff[] = [];
+  let casts: Record<string, SkillCast[]> = {};
+  let nid = -1;
+  for (const it of abilityItems) {
+    const key = it.ability as WWKey;
+    const ability = abilities[key];
+    const ql = buffs.filter(b => b.key.endsWith('_BD'));
+    const blessing = computeBlessingBuffs(ql);
+    const end = calcDynamicEndTime(
+      it.start,
+      ability.cast ?? 0,
+      buffs,
+      blessing,
+      haste,
+      key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
+    );
+    const dur = end - it.start;
+    const idx = items.findIndex(x => x.id === it.id);
+    if (idx >= 0) items[idx] = { ...items[idx], end: dur > 0 ? it.start + dur : undefined };
+
+    const recs = casts[key] || [];
+    const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
+    const overlaps = recs.filter(c => {
+      const e = getEndAt(c, buffs);
+      return it.start < e && e > c.start;
+    });
+    const notReady = overlaps.length >= maxCharges;
+    const lowChi = chi < getActualChiCost(key);
+    if (idx >= 0) {
+      let cls = (items[idx].className || '').replace('warning', '').trim();
+      if (notReady || lowChi) cls = (cls + ' warning').trim();
+      items[idx] = { ...items[idx], className: cls };
+    }
+
+    const actualCost = getActualChiCost(key);
+    const chiGain = key === 'TP' ? 2 : key === 'SEF' ? 2 : key === 'BLK_HL' ? 1 : 0;
+    if (actualCost > 0) chi = Math.max(0, chi - actualCost);
+    chi = Math.min(6, chi + chiGain);
+
+    const sefActive = buffs.find(b => b.key === 'SEF' && b.end > it.start);
+    const sefChi = SEF_EXTENSION_COST_MAP[key] || 0;
+    if (sefActive && sefChi > 0) sefActive.end += 0.25 * sefChi;
+
+    if (key === 'AA') {
+      buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 5, src: it.id });
+    } else if (key === 'SW') {
+      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 5, src: it.id });
+    } else if (key === 'CC') {
+      const start = it.start + dur;
+      buffs = buffs.map(b => (b.key === 'AA_BD' && b.start <= start && start < b.end ? { ...b, end: start } : b));
+      buffs.push({ id: --nid, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), group: 5, src: it.id });
+    } else if (key === 'BL') {
+      buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 2, src: it.id, multiplier: 1.3 });
+    } else if (key === 'SEF') {
+      buffs.push({ id: --nid, key: 'SEF', start: it.start, end: it.start + 15, label: 'SEF', group: 3, src: it.id });
+    }
+
+    const hasteMult = (ability as any).affectedByHaste
+      ? hasteAt(it.start, [...buffs, ...blessing], haste)
+      : 1;
+    const cdDur = (ability.cooldown ?? 0) / hasteMult;
+    if (key === 'SEF') {
+      casts['RSK'] = (casts['RSK'] || []).filter(c => getEndAt(c, buffs) <= it.start);
+    }
+    casts[key] = [
+      ...(casts[key] || []),
+      { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult },
+    ];
+  }
+  const total = Math.max(0, ...items.map(i => (i.end ?? i.start)));
+  console.log('Recomputed full timeline from 0 to ' + total.toFixed(2) + 's');
+  return { items, buffs, casts, chi };
+}
 
 export interface BuffRec { key: string; start: number; end: number; multiplier?: number }
 
@@ -133,10 +267,11 @@ export default function App() {
     const baseCast = ability.cast ?? 0;
 
     const originalCost = getOriginalChiCost(key);
-    const actualCost = getActualChiCost(key, buffs, now);
+    const actualCost = getActualChiCost(key);
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
+    else if (key === 'BLK_HL') chiGain = 1;
 
     if (actualCost > 0 && chi < actualCost) {
       alert('Chi不足，无法施放技能');
@@ -219,14 +354,15 @@ export default function App() {
 
     if (actualCost > 0) {
       dispatch(spendChi(actualCost));
-      if (sefActive && originalCost > 0) {
-        extension = 0.25 * originalCost;
-        setBuffs(bs =>
-          bs.map(b =>
-            b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
-          )
-        );
-      }
+    }
+    const sefChiCount = SEF_EXTENSION_COST_MAP[key] || 0;
+    if (sefActive && sefChiCount > 0) {
+      extension = 0.25 * sefChiCount;
+      setBuffs(bs =>
+        bs.map(b =>
+          b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
+        )
+      );
     }
     if (chiGain > 0) {
       dispatch(gainChi(chiGain));
@@ -403,6 +539,15 @@ export default function App() {
     }
     return res;
   })();
+
+  useEffect(() => {
+    const { items: newItems, buffs: newBuffs, casts: newCasts, chi: newChi } =
+      recomputeTimeline(items, stats.haste);
+    if (JSON.stringify(newItems) !== JSON.stringify(items)) setItems(newItems);
+    setBuffs(newBuffs as any);
+    setCasts(newCasts);
+    dispatch(setChi(newChi));
+  }, [items, stats.haste]);
 
   useEffect(() => {
     const ro = new ResizeObserver(entries => {

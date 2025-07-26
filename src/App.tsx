@@ -18,6 +18,17 @@ import { AbilityIcon } from './components/AbilityIcon';
 import { AbilityPalette } from './components/AbilityPalette';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
+import { recomputeTimeline } from './lib/recomputeTimeline';
+
+const SEF_EXTENSION_COST_MAP: Record<WWKey, number> = {
+  BLK_HL: 1,
+  SCK_HL: 2,
+  RSK: 2,
+  FoF: 3,
+  AA: 2,
+  SCK: 2,
+  BOK: 1,
+};
 
 const getOriginalChiCost = (key: WWKey): number => {
   switch (key) {
@@ -33,10 +44,13 @@ const getOriginalChiCost = (key: WWKey): number => {
   }
 };
 
-const getActualChiCost = (key: WWKey, buffs: {key: string; end: number;}[], now: number): number => {
-  const orig = getOriginalChiCost(key);
-  const sefActive = buffs.some(b => b.key === 'SEF' && b.end > now);
-  return sefActive && orig > 0 ? Math.max(0, orig - 1) : orig;
+const getActualChiCost = (
+  key: WWKey,
+  _buffs: { key: string; end: number }[],
+  _now: number,
+): number => {
+  if (key === 'SCK_HL') return 0;
+  return getOriginalChiCost(key);
 };
 
 export interface BuffRec { key: string; start: number; end: number; multiplier?: number }
@@ -84,6 +98,21 @@ export default function App() {
   const abilities = wwData(stats.haste);
 
   const timeline = React.useMemo(() => buildTimeline(casts, buffs), [casts, buffs]);
+
+  useEffect(() => {
+    const res = recomputeTimeline(items, stats.haste);
+    if (JSON.stringify(res.casts) !== JSON.stringify(casts)) {
+      setCasts(res.casts);
+    }
+    if (JSON.stringify(res.buffs) !== JSON.stringify(buffs)) {
+      setBuffs(res.buffs as any);
+    }
+    if (JSON.stringify(res.items) !== JSON.stringify(items)) {
+      setItems(res.items);
+    }
+    const total = res.items.reduce((p, it) => Math.max(p, it.end ?? it.start), 0);
+    console.log('Recomputed full timeline from 0 to ' + total.toFixed(2) + 's');
+  }, [items, stats.haste]);
 
   const isOnCD = (key: WWKey, start: number, exclude?: number) => {
     const ability = abilities[key];
@@ -137,6 +166,7 @@ export default function App() {
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
+    else if (key === 'BLK_HL') chiGain = 1;
 
     if (actualCost > 0 && chi < actualCost) {
       alert('Chi不足，无法施放技能');
@@ -216,17 +246,19 @@ export default function App() {
 
     let extension = 0;
     const sefActive = buffs.find(b => b.key === 'SEF' && b.end > now);
+    const sefChiCount = SEF_EXTENSION_COST_MAP[key] || 0;
 
     if (actualCost > 0) {
       dispatch(spendChi(actualCost));
-      if (sefActive && originalCost > 0) {
-        extension = 0.25 * originalCost;
-        setBuffs(bs =>
-          bs.map(b =>
-            b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
-          )
-        );
-      }
+    }
+
+    if (sefActive && sefChiCount > 0) {
+      extension = 0.25 * sefChiCount;
+      setBuffs(bs =>
+        bs.map(b =>
+          b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
+        )
+      );
     }
     if (chiGain > 0) {
       dispatch(gainChi(chiGain));

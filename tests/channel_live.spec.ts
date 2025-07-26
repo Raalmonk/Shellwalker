@@ -4,6 +4,7 @@ import {
   cast,
   advanceTime,
   setGearHastePercent,
+  selectRemainingChannel,
   selectRemFoF,
   selectRemCC,
 } from '../src/logic/dynamicEngine';
@@ -39,4 +40,20 @@ it('CC channel reacts to gear haste change', () => {
   const before = selectRemCC(s);
   setGearHastePercent(s, 0.50);
   expect(selectRemCC(s)).toBeLessThan(before);
+});
+
+it('SCK channel = 1.5s/haste', () => {
+  setGearHastePercent(s, 0.20); // 1.2×
+  cast(s, 'SCK');
+  const rem = selectRemainingChannel(s, 'SCK');
+  expect(rem).toBeCloseTo(1500 / 1.2, 0);
+});
+
+it('SCK_HL channel live updates', () => {
+  setGearHastePercent(s, 0);
+  cast(s, 'SCK_HL');
+  advanceTime(s, 500);
+  const before = selectRemainingChannel(s, 'SCK_HL');
+  setGearHastePercent(s, 0.50); // 1.5×
+  expect(selectRemainingChannel(s, 'SCK_HL')).toBeLessThan(before);
 });

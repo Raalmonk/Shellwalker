@@ -7,7 +7,7 @@ import { getEndAt } from './utils/getEndAt';
 import { GRID_STEP_MS, } from './constants/time';
 import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
 import { buildTimeline } from './lib/simulator';
-import { sweepRate } from './utils/dragonSweep';
+import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
 import { computeBlessingSegments } from './util/blessingSegments';
 import { SkillCast } from './types';
@@ -255,17 +255,7 @@ export default function App() {
     for (let i = 0; i < times.length - 1; i++) {
       const s = times[i];
       const e = times[i + 1];
-      const mid = (s + e) / 2;
-      const base = hasteAt(mid, [...buffs, ...blessingBuffs], stats.haste);
-      const rate = Math.max(base, sweepRate({
-        now: 0,
-        gear: [],
-        buffs,
-        snapshotCds: [],
-        dynamicCasts: [],
-        channels: { active: {} },
-      } as any, mid));
-      const extra = rate - 1;
+      const extra = cdSpeedAt((s + e) / 2, buffs) - 1;
       if (extra > 0) {
         res.push({
           id: 10000 + i,

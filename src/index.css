@@ -33,6 +33,10 @@ body.light {
   background-color: rgba(0, 255, 0, 0.2);
   border-color: rgba(0, 128, 0, 0.5);
 }
+.vis-item.sef-buff {
+  background-color: #e5d5ff;
+  border-color: #a56dff;
+}
 
 .vis-item.haste {
   background-color: #001C55;

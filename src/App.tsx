@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState, AppDispatch } from './store';
+import { gainChi, spendChi, resetChi } from './store/chiSlice';
 import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste, hasteAt } from './lib/haste';
@@ -39,6 +42,13 @@ export default function App() {
   interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; source?: string; }
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
+
+  const chi = useSelector((state: RootState) => state.chi.value);
+  const dispatch: AppDispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(resetChi());
+  }, [dispatch]);
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -92,7 +102,46 @@ export default function App() {
   const click = (key: WWKey) => {
     const now = time;
     const ability = abilities[key];
+
+    if (key === 'SEF' && buffs.some(b => b.key === 'SEF' && b.end > now)) {
+      alert('风火雷电正在持续');
+      return;
+    }
+
     const baseCast = ability.cast ?? 0;
+
+    let chiChange = 0;
+    switch (key) {
+      case 'TP':
+        chiChange = 2;
+        break;
+      case 'BOK':
+        chiChange = -1;
+        break;
+      case 'BLK_HL':
+        chiChange = 1;
+        break;
+      case 'SCK':
+        chiChange = -2;
+        break;
+      case 'RSK':
+        chiChange = -2;
+        break;
+      case 'FoF':
+        chiChange = -3;
+        break;
+      case 'AA':
+        chiChange = -2;
+        break;
+      case 'SEF':
+        chiChange = 2;
+        break;
+    }
+
+    if (chi + chiChange < 0) {
+      alert('Chi不足，无法施放技能');
+      return;
+    }
     const endTime = calcDynamicEndTime(
       now,
       baseCast,
@@ -154,6 +203,9 @@ export default function App() {
     } else if (key === 'BL') {
       extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 2, src: id, multiplier: 1.3 } as any);
       setNextBuffId(nextBuffId - 1);
+    } else if (key === 'SEF') {
+      extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF', group: 3, src: id } as any);
+      setNextBuffId(nextBuffId - 1);
     }
 
     if (extraBuffs.length) {
@@ -162,24 +214,40 @@ export default function App() {
       });
     }
 
+    if (chiChange < 0) {
+      dispatch(spendChi(-chiChange));
+      const idx = buffs.findIndex(b => b.key === 'SEF' && b.end > now);
+      if (idx !== -1) {
+        const added = 0.25 * (-chiChange);
+        setBuffs(bs => bs.map((b, i) => i === idx ? { ...b, end: b.end + added } : b));
+      }
+    } else if (chiChange > 0) {
+      dispatch(gainChi(chiChange));
+    }
+
+
     const baseCd = ability.cooldown ?? 0;
     const hasteMult = (ability as any).affectedByHaste
       ? hasteAt(now, [...buffs, ...blessingBuffs], stats.haste)
       : 1;
     const cdDur = baseCd / hasteMult;
-    setCasts(cdObj => ({
-      ...cdObj,
-      [key]: [
-        ...cds,
+    setCasts(cdObj => {
+      const out = { ...cdObj } as Record<string, SkillCast[]>;
+      if (key === 'SEF') {
+        out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= now);
+      }
+      out[key] = [
+        ...(cdObj[key] || []),
         {
           id: String(id),
           start: now,
           base: cdDur,
           haste: hasteMult,
         },
-      ],
-    }));
-    setTime(now + (castDur > 0 ? castDur : 1));
+      ];
+      return out;
+    });
+    setTime(now + (castDur > 0 ? castDur : key === 'SEF' ? 0.001 : 1));
   };
 
   // vertical lines showing when a cooldown finishes
@@ -292,7 +360,7 @@ export default function App() {
       start: b.start,
       end: b.end,
       label: b.label,
-      className: 'buff',
+      className: b.key === 'SEF' ? 'buff sef-buff' : 'buff',
     })),
   ];
 
@@ -458,6 +526,7 @@ export default function App() {
 
       <div className="space-y-1 text-sm">
         <div>Haste Rating: {stats.haste} ({(ratingToHaste(stats.haste) * 100).toFixed(2)}%)</div>
+        <div>Chi: {chi}</div>
         <div>
           SEF Charges:
           {Math.max(

@@ -1,9 +1,12 @@
+import { TimelineRow } from './timelineRows';
+
 export interface Ability {
   id: string;
   cooldownMs: number;
   snapshot?: boolean;
   baseChannelMs?: number;
   channelDynamic?: boolean;
+  row?: TimelineRow;
 }
 
 export const ABILITIES: Record<string, Ability> = {
@@ -26,14 +29,16 @@ export const ABILITIES: Record<string, Ability> = {
     cooldownMs: 0,
     baseChannelMs: 1500,
     channelDynamic: true,
+    row: 'minorFiller',
   },
   SCK_HL: {
     id: 'SCK_HL',
     cooldownMs: 0,
     baseChannelMs: 1500,
     channelDynamic: true,
+    row: 'minorFiller',
   },
-  BLK_HL: { id: 'BLK_HL', cooldownMs: 0 },
+  BLK_HL: { id: 'BLK_HL', cooldownMs: 0, row: 'minorFiller' },
 };
 
 export function abilityById(id: string): Ability {

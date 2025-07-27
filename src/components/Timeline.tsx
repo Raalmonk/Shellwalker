@@ -7,7 +7,7 @@ import { GRID_STEP_MS } from "../constants/time";
 // bars (used for cooldown visualization).
 export interface TLItem {
   id: number;
-  group: number; // timeline group id
+  group: number; // group id 1-7
   start: number; // start time in seconds
   end?: number; // optional end time in seconds
   label: string;
@@ -16,7 +16,6 @@ export interface TLItem {
   className?: string;
   pendingDelete?: boolean;
   type?: string;
-  gcdOnly?: boolean;
   title?: string;
 }
 
@@ -25,10 +24,8 @@ import { GUIDE_COLOR } from '../constants/colors';
 
 const groups = [
   'Haste',
-  'Xuen',
-  'SEF',
-  'Acclamation',
-  'Bloodlust',
+  'Buffs',
+  t('Boss技能'),
   'Blessing',
   t('青龙之心'),
   'Major Cooldown',
@@ -200,12 +197,7 @@ export const Timeline = ({
         className: [it.className, it.type === 'guide' ? 'event-guide' : ''].filter(Boolean).join(' '),
         ...(it.stacks ? { stacks: it.stacks } : {}),
         ...(it.title ? { title: it.title } : {}),
-        style:
-          it.type === 'guide'
-            ? it.gcdOnly
-              ? undefined
-              : `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#000`
-            : undefined,
+        style: it.type === 'guide' ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#fff` : undefined,
       })),
     );
   }, [items]);

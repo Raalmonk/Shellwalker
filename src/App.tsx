@@ -11,6 +11,7 @@ import { GRID_STEP_MS, } from './constants/time';
 import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
 import { buildTimeline } from './lib/simulator';
 import { cdSpeedAt } from './lib/speed';
+import { cdUnits, reduceCd } from './lib/cooldown';
 import { fmt } from './util/fmt';
 import { computeBlessingSegments } from './util/blessingSegments';
 import { SkillCast } from './types';
@@ -110,6 +111,18 @@ function recomputeTimeline(
       let cls = (items[idx].className || '').replace('warning', '').trim();
       if (notReady || lowChi) cls = (cls + ' warning').trim();
       items[idx] = { ...items[idx], className: cls };
+    }
+
+    if (key === 'BOK' || key === 'BLK_HL') {
+      const refresh = cdSpeedAt(it.start, buffs);
+      ['FoF', 'RSK'].forEach(k => {
+        const list = casts[k] || [];
+        casts[k] = list.map(c => reduceCd(c, it.start, refresh, buffs, cdSpeedAt));
+      });
+      if (idx >= 0) {
+        items[idx].title = `Refreshes FoF/RSK CD by: ${refresh}s`;
+      }
+      console.log(`[CD REFRESH] BOK cast at ${it.start}s reduced FoF and RSK by ${refresh}s`);
     }
 
     const origCost = getOriginalChiCost(key);
@@ -285,6 +298,7 @@ export default function App() {
       : ability.name;
     const group = groupMap[key];
     const id = nextId;
+    const refreshAmt = key === 'BOK' || key === 'BLK_HL' ? cdSpeedAt(now, buffs) : 0;
     setNextId(id + 1);
     setItems(it => [
       ...it,
@@ -297,6 +311,7 @@ export default function App() {
         ability: key,
         pendingDelete: false,
         type: duration > 0 ? 'guide' : undefined,
+        ...(refreshAmt ? { title: `Refreshes FoF/RSK CD by: ${refreshAmt}s` } : {}),
       },
     ]);
     const extraBuffs: Buff[] = [];
@@ -365,6 +380,14 @@ export default function App() {
       const out = { ...cdObj } as Record<string, SkillCast[]>;
       if (key === 'SEF') {
         out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= now);
+      }
+      if (key === 'BOK' || key === 'BLK_HL') {
+        const refresh = cdSpeedAt(now, buffs);
+        ['FoF', 'RSK'].forEach(k => {
+          const list = out[k] || [];
+          out[k] = list.map(c => reduceCd(c, now, refresh, buffs, cdSpeedAt));
+        });
+        console.log(`[CD REFRESH] BOK cast at ${now}s reduced FoF and RSK by ${refresh}s`);
       }
       out[key] = [
         ...(cdObj[key] || []),

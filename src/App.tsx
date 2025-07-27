@@ -90,23 +90,13 @@ function recomputeTimeline(
     const dur = end - it.start;
     const isGCD = ability.triggersGCD ?? true;
     const duration = dur > 0 ? dur : isGCD ? 1 : 0;
-    const gcdOnly = isGCD && dur <= 0;
     const idx = items.findIndex(x => x.id === it.id);
-    if (idx >= 0) {
-      const cls = [
-        items[idx].className?.replace('gcd', '').trim(),
-        gcdOnly ? 'gcd' : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
+    if (idx >= 0)
       items[idx] = {
         ...items[idx],
         end: duration > 0 ? it.start + duration : undefined,
         type: duration > 0 ? 'guide' : undefined,
-        className: cls,
-        gcdOnly,
       };
-    }
 
     const recs = casts[key] || [];
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
@@ -132,21 +122,21 @@ function recomputeTimeline(
     if (sefActiveBuff && origCost > 0) sefActiveBuff.end += 0.25 * origCost;
 
     if (key === 'AA') {
-      buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 7, src: it.id });
+      buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 5, src: it.id });
     } else if (key === 'SW') {
-      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 7, src: it.id });
+      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 5, src: it.id });
     } else if (key === 'CC') {
       const start = it.start + dur;
       buffs = buffs.map(b => (b.key === 'AA_BD' && b.start <= start && start < b.end ? { ...b, end: start } : b));
-      buffs.push({ id: --nid, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), group: 7, src: it.id });
+      buffs.push({ id: --nid, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), group: 5, src: it.id });
     } else if (key === 'BL') {
-      buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 5, src: it.id, multiplier: 1.3 });
+      buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 2, src: it.id, multiplier: 1.3 });
     } else if (key === 'SEF') {
       buffs.push({ id: --nid, key: 'SEF', start: it.start, end: it.start + 15, label: 'SEF', group: 3, src: it.id });
     } else if (key === 'RSK') {
-      buffs.push({ id: --nid, key: 'Acclamation', start: it.start, end: it.start + 12, label: 'Acclamation', group: 4, src: it.id });
+      buffs.push({ id: --nid, key: 'Acclamation', start: it.start, end: it.start + 12, label: 'Acclamation', group: 2, src: it.id });
     } else if (key === 'Xuen') {
-      buffs.push({ id: --nid, key: 'Xuen', start: it.start, end: it.start + 20, label: 'Xuen', group: 2, src: it.id, multiplier: 1.15 });
+      buffs.push({ id: --nid, key: 'Xuen', start: it.start, end: it.start + 20, label: 'Xuen', group: 1, src: it.id, multiplier: 1.15 });
     }
 
     const hasteMult = (ability as any).affectedByHaste
@@ -231,20 +221,20 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 8,
-    SEF: 8,
-    CC: 8,
-    AA: 9,
-    SW: 9,
-    FoF: 10,
-    RSK: 10,
-    WU: 10,
-    TP: 11,
-    BOK: 11,
-    SCK: 11,
-    SCK_HL: 11,
-    BLK_HL: 11,
-    BL: 8,
+    Xuen: 6,
+    SEF: 6,
+    CC: 6,
+    AA: 7,
+    SW: 7,
+    FoF: 8,
+    RSK: 8,
+    WU: 8,
+    TP: 9,
+    BOK: 9,
+    SCK: 9,
+    SCK_HL: 9,
+    BLK_HL: 9,
+    BL: 2,
   };
 
   // handler when an ability button is clicked
@@ -282,7 +272,6 @@ export default function App() {
     const castDur = endTime - now;
     const isGCD = ability.triggersGCD ?? true;
     const duration = castDur > 0 ? castDur : isGCD ? 1 : 0;
-    const gcdOnly = isGCD && castDur <= 0;
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
     const active = cds.filter(cd => getEndAt(cd, buffs) > now);
@@ -313,16 +302,14 @@ export default function App() {
         ability: key,
         pendingDelete: false,
         type: duration > 0 ? 'guide' : undefined,
-        className: gcdOnly ? 'gcd' : undefined,
-        gcdOnly,
       },
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 7 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 5 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 7 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 5 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
@@ -332,19 +319,19 @@ export default function App() {
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 7 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 5 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'BL') {
-      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 5, src: id, multiplier: 1.3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 2, src: id, multiplier: 1.3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SEF') {
       extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF', group: 3, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'RSK') {
-      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now, end: now + 12, label: 'Acclamation', group: 4, src: id } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now, end: now + 12, label: 'Acclamation', group: 2, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'Xuen') {
-      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: now, end: now + 20, label: 'Xuen', group: 2, src: id, multiplier: 1.15 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: now, end: now + 20, label: 'Xuen', group: 1, src: id, multiplier: 1.15 } as any);
       setNextBuffId(nextBuffId - 1);
     }
 
@@ -482,10 +469,10 @@ export default function App() {
       if (extra > 0) {
         res.push({
           id: 10000 + i,
-          group: 7,
+          group: 5,
           start: s,
           end: e,
-          label: `+${extra.toFixed(2)}s/s`,
+          label: `${t('青龙')}+${extra.toFixed(2)}cd/s`,
           className: 'buff',
         });
       }
@@ -497,7 +484,7 @@ export default function App() {
     const segs = computeBlessingSegments(blessingBuffs);
     return segs.map((seg, i) => ({
       id: 15000 + i,
-      group: 6,
+      group: 4,
       start: seg.start,
       end: seg.end,
       label: `${seg.stacks}×`,
@@ -510,10 +497,10 @@ export default function App() {
     const segs = computeAcclamationSegments(acclamationBuffs);
     return segs.map((seg, i) => ({
       id: 15500 + i,
-      group: 4,
+      group: 2,
       start: seg.start,
       end: seg.end,
-      label: `${seg.pct}%`,
+      label: `Acclamation ${seg.pct}%`,
       className: 'buff',
     }));
   })();

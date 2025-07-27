@@ -44,7 +44,7 @@ function computeBlessingBuffs(dragons: CalcBuff[]): CalcBuff[] {
       start,
       end,
       label: t('祝福'),
-      group: 4,
+      group: 8,
       multiplier: 1.15,
       source,
     });
@@ -96,6 +96,8 @@ function recomputeTimeline(
         ...items[idx],
         end: duration > 0 ? it.start + duration : undefined,
         type: duration > 0 ? 'guide' : undefined,
+        className:
+          duration === 1 && dur <= 0 && isGCD ? 'gcd' : items[idx].className,
       };
 
     const recs = casts[key] || [];
@@ -122,21 +124,21 @@ function recomputeTimeline(
     if (sefActiveBuff && origCost > 0) sefActiveBuff.end += 0.25 * origCost;
 
     if (key === 'AA') {
-      buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 5, src: it.id });
+      buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 9, src: it.id });
     } else if (key === 'SW') {
-      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 5, src: it.id });
+      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 9, src: it.id });
     } else if (key === 'CC') {
       const start = it.start + dur;
       buffs = buffs.map(b => (b.key === 'AA_BD' && b.start <= start && start < b.end ? { ...b, end: start } : b));
-      buffs.push({ id: --nid, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), group: 5, src: it.id });
+      buffs.push({ id: --nid, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), group: 9, src: it.id });
     } else if (key === 'BL') {
-      buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 2, src: it.id, multiplier: 1.3 });
+      buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 5, src: it.id, multiplier: 1.3 });
     } else if (key === 'SEF') {
       buffs.push({ id: --nid, key: 'SEF', start: it.start, end: it.start + 15, label: 'SEF', group: 3, src: it.id });
     } else if (key === 'RSK') {
-      buffs.push({ id: --nid, key: 'Acclamation', start: it.start, end: it.start + 12, label: 'Acclamation', group: 2, src: it.id });
+      buffs.push({ id: --nid, key: 'Acclamation', start: it.start, end: it.start + 12, label: 'Acclamation', group: 4, src: it.id });
     } else if (key === 'Xuen') {
-      buffs.push({ id: --nid, key: 'Xuen', start: it.start, end: it.start + 20, label: 'Xuen', group: 1, src: it.id, multiplier: 1.15 });
+      buffs.push({ id: --nid, key: 'Xuen', start: it.start, end: it.start + 20, label: 'Xuen', group: 2, src: it.id, multiplier: 1.15 });
     }
 
     const hasteMult = (ability as any).affectedByHaste
@@ -221,20 +223,20 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 6,
-    SEF: 6,
-    CC: 6,
-    AA: 7,
-    SW: 7,
-    FoF: 8,
-    RSK: 8,
-    WU: 8,
-    TP: 9,
-    BOK: 9,
-    SCK: 9,
-    SCK_HL: 9,
-    BLK_HL: 9,
-    BL: 2,
+    Xuen: 10,
+    SEF: 10,
+    CC: 10,
+    AA: 11,
+    SW: 11,
+    FoF: 12,
+    RSK: 12,
+    WU: 12,
+    TP: 13,
+    BOK: 13,
+    SCK: 13,
+    SCK_HL: 13,
+    BLK_HL: 13,
+    BL: 6,
   };
 
   // handler when an ability button is clicked
@@ -302,14 +304,15 @@ export default function App() {
         ability: key,
         pendingDelete: false,
         type: duration > 0 ? 'guide' : undefined,
+        className: duration === 1 && castDur <= 0 && isGCD ? 'gcd' : undefined,
       },
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 5 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 5 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = now + castDur;
@@ -319,19 +322,19 @@ export default function App() {
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 5 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'BL') {
-      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 2, src: id, multiplier: 1.3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 5, src: id, multiplier: 1.3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SEF') {
       extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF', group: 3, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'RSK') {
-      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now, end: now + 12, label: 'Acclamation', group: 2, src: id } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now, end: now + 12, label: 'Acclamation', group: 4, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'Xuen') {
-      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: now, end: now + 20, label: 'Xuen', group: 1, src: id, multiplier: 1.15 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: now, end: now + 20, label: 'Xuen', group: 2, src: id, multiplier: 1.15 } as any);
       setNextBuffId(nextBuffId - 1);
     }
 
@@ -441,7 +444,7 @@ export default function App() {
         start,
         end,
         label: t('祝福'),
-        group: 4,
+        group: 8,
         multiplier: 1.15,
         source,
       } as Buff);
@@ -469,10 +472,10 @@ export default function App() {
       if (extra > 0) {
         res.push({
           id: 10000 + i,
-          group: 5,
+          group: 9,
           start: s,
           end: e,
-          label: `${t('青龙')}+${extra.toFixed(2)}cd/s`,
+          label: `+${extra.toFixed(2)}s/s`,
           className: 'buff',
         });
       }
@@ -484,7 +487,7 @@ export default function App() {
     const segs = computeBlessingSegments(blessingBuffs);
     return segs.map((seg, i) => ({
       id: 15000 + i,
-      group: 4,
+      group: 8,
       start: seg.start,
       end: seg.end,
       label: `${seg.stacks}×`,
@@ -497,10 +500,10 @@ export default function App() {
     const segs = computeAcclamationSegments(acclamationBuffs);
     return segs.map((seg, i) => ({
       id: 15500 + i,
-      group: 2,
+      group: 4,
       start: seg.start,
       end: seg.end,
-      label: `Acclamation ${seg.pct}%`,
+      label: `${seg.pct}%`,
       className: 'buff',
     }));
   })();

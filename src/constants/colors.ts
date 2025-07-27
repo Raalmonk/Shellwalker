@@ -1,1 +1,1 @@
-export const GUIDE_COLOR = '#003377';
+export const GUIDE_COLOR = '#66B2FF';

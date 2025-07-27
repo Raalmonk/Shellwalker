@@ -246,7 +246,7 @@
     "effects": [
       {}
     ],
-    "gcd": 0,
+    "gcd": 1,
     "cooldown": 90,
     "charges": 2
   },

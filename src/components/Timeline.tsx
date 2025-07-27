@@ -24,10 +24,6 @@ import { GUIDE_COLOR } from '../constants/colors';
 
 const groups = [
   'Haste',
-  'Xuen',
-  'SEF',
-  'Acclamation',
-  'Bloodlust',
   'Buffs',
   t('Boss技能'),
   'Blessing',
@@ -201,10 +197,7 @@ export const Timeline = ({
         className: [it.className, it.type === 'guide' ? 'event-guide' : ''].filter(Boolean).join(' '),
         ...(it.stacks ? { stacks: it.stacks } : {}),
         ...(it.title ? { title: it.title } : {}),
-        style:
-          it.type === 'guide' && !(it.className || '').includes('gcd')
-            ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#fff`
-            : undefined,
+        style: it.type === 'guide' ? `background-color:${GUIDE_COLOR};border-color:${GUIDE_COLOR};color:#fff` : undefined,
       })),
     );
   }, [items]);

@@ -89,34 +89,3 @@ body.light {
 .ability-row::-webkit-scrollbar {
   height: 6px;
 }
-
-.app-layout {
-  display: flex;
-  height: 100vh;
-  width: 100%;
-}
-
-.sidebar {
-  flex: 0 0 25%;
-  overflow-y: auto;
-}
-
-.timeline-container {
-  flex: 1;
-  overflow: auto;
-}
-
-/* larger timeline row height */
-.timeline-container .vis-item,
-.timeline-container .vis-label,
-.timeline-container .vis-background,
-.timeline-container .vis-group {
-  height: 48px;
-  line-height: 48px;
-}
-
-.timeline-container .vis-item .vis-item-content,
-.timeline-container .vis-label .vis-inner {
-  line-height: 48px;
-  height: 48px;
-}

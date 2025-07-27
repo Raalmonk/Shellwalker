@@ -562,6 +562,8 @@ export default function App() {
     setBuffs(newBuffs as any);
     setCasts(newCasts);
     dispatch(setChi(newChi));
+    const minBuffId = newBuffs.reduce((m, b) => Math.min(m, b.id), 0);
+    setNextBuffId(n => Math.min(n, minBuffId - 1));
   }, [items, stats.haste]);
 
   useEffect(() => {

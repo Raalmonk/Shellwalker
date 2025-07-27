@@ -6,7 +6,6 @@ import { Timeline, TLItem } from './components/Timeline';
 import { wwData, WWKey } from './jobs/windwalker';
 import { ratingToHaste, hasteAt } from './lib/haste';
 import { calcDynamicEndTime } from './utils/calcDynamicEndTime';
-import { ROW_HEIGHT, ROW_COUNT, HEADER_HEIGHT } from './constants/layout';
 import { getEndAt } from './utils/getEndAt';
 import { GRID_STEP_MS, } from './constants/time';
 import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
@@ -167,8 +166,6 @@ export default function App() {
   interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; source?: string; }
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
-
-  const containerHeight = ROW_HEIGHT * ROW_COUNT + HEADER_HEIGHT;
 
   const chi = useSelector((state: RootState) => state.chi.value);
   const dispatch: AppDispatch = useDispatch();
@@ -734,7 +731,7 @@ export default function App() {
         );
       })()}
       </aside>
-      <main className="timeline-container" style={{ height: containerHeight }}>
+      <main className="timeline-container">
         <Timeline
           items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
           start={viewStart}

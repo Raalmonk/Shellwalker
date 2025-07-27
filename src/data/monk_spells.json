@@ -53,7 +53,7 @@
     "effects": [
       {}
     ],
-    "gcd": 1,
+    "gcd": 0,
     "cooldown": 30
   },
   {
@@ -246,7 +246,7 @@
     "effects": [
       {}
     ],
-    "gcd": 1,
+    "gcd": 0,
     "cooldown": 90,
     "charges": 2
   },

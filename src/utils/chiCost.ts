@@ -19,6 +19,10 @@ export function getOriginalChiCost(key: string): number {
 
 export function getActualChiCost(key: string, buffs: Buff[], now: number): number {
   if (key === 'BLK_HL') return 0;
+  if (key === 'SCK_HL') {
+    // SCK_HL never costs Chi
+    return 0;
+  }
   const orig = getOriginalChiCost(key);
   const sefActive = buffs.some(b => b.key === 'SEF' && b.end > now);
   return sefActive && orig > 0 ? Math.max(0, orig - 1) : orig;

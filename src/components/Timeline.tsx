@@ -108,7 +108,7 @@ export const Timeline = ({
 
   useEffect(() => {
     if (!containerRef.current || timelineRef.current) return;
-    const totalHeight = groups.length * 48 + 50;
+    const totalHeight = groups.length * 58 + 200;
     const tl = new VisTimeline(
       containerRef.current,
       itemDS.current,

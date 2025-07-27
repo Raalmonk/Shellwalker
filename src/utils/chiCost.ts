@@ -8,6 +8,7 @@ export function getOriginalChiCost(key: string): number {
     case 'TP': return 0;
     case 'BOK': return 1;
     case 'RSK': return 2;
+    case 'RSK_HL': return 2;
     case 'FoF': return 3;
     case 'SCK': return 2;
     case 'AA': return 2;

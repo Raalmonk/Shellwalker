@@ -15,7 +15,7 @@ export interface Ability {
 
 export const ABILITIES: Record<string, Ability> = {
   AA: { id: 'AA', cooldownMs: 30000 },
-  SW: { id: 'SW', cooldownMs: 30000, baseChannelMs: 2000, channelDynamic: true },
+  SW: { id: 'SW', cooldownMs: 30000, baseChannelMs: 500, channelDynamic: false },
   YH: { id: 'YH', cooldownMs: 30000 },
   FoF: {
     id: 'FoF',
@@ -25,6 +25,7 @@ export const ABILITIES: Record<string, Ability> = {
     channelDynamic: true,
   },
   RSK: { id: 'RSK', cooldownMs: 10000, snapshot: true },
+  RSK_HL: { id: 'RSK_HL', cooldownMs: 10000, snapshot: true },
   WU: { id: 'WU', cooldownMs: 25000, snapshot: true },
   CC: { id: 'CC', cooldownMs: 90000, baseChannelMs: 1500, channelDynamic: true },
   BL: { id: 'BL', cooldownMs: 0 },

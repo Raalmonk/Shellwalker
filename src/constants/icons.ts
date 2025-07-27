@@ -1,5 +1,6 @@
 import WU from '../assets/abilityIcons/ability_monk_hurricanestrike.jpg';
 import RSK from '../assets/abilityIcons/ability_monk_risingsunkick.jpg';
+import RSK_HL from '../assets/abilityIcons/ability_monk_risingsunkick_HL.jpg';
 import BOK from '../assets/abilityIcons/ability_monk_roundhousekick.jpg';
 import Xuen from '../assets/abilityIcons/ability_monk_summontigerstatue.jpg';
 import SW from '../assets/abilityIcons/ability_skyreach_wind_wall.jpg';
@@ -16,6 +17,7 @@ import TP from '../Pics/TP.jpg';
 export const ABILITY_ICON_MAP: Record<string, {src: string; abbr: string}> = {
   WU:  {src: WU,  abbr: 'WU'},
   RSK: {src: RSK, abbr: 'RSK'},
+  RSK_HL: {src: RSK_HL, abbr: 'RSKH'},
   BOK: {src: BOK, abbr: 'BOK'},
   Xuen:{src: Xuen,abbr: 'Xuen'},
   SW:  {src: SW,  abbr: 'SW'},

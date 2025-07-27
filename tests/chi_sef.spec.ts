@@ -44,4 +44,26 @@ describe('BLK_HL chi and SEF extension', () => {
     expect(chi).toBe(2);
     expect(sef.end).toBeCloseTo(15.5, 3);
   });
+
+  it('RSK_HL nets 1 Chi and extends SEF by 0.5s', () => {
+    const now = 0;
+    const sef: Buff = { key: 'SEF', end: 15 };
+    const buffs: Buff[] = [sef];
+
+    const original = getOriginalChiCost('RSK_HL');
+    expect(original).toBe(2);
+
+    const actual = getActualChiCost('RSK_HL', buffs, now);
+    expect(actual).toBe(1);
+
+    let chi = 2;
+    if (actual > 0) chi -= actual;
+    chi += 1;
+    if (buffs.find(b => b.key === 'SEF' && b.end > now) && original > 0) {
+      sef.end += 0.25 * original;
+    }
+
+    expect(chi).toBe(2);
+    expect(sef.end).toBeCloseTo(15.5, 3);
+  });
 });

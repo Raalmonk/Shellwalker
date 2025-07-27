@@ -15,11 +15,12 @@ export const WW = {
   BLK_HL: 999997,
   SCK: 999996,
   SCK_HL: 999995,
+  RSK_HL: 999994,
 } as const;
 
 export type WWKey = keyof typeof WW;
 
-const HASTED: WWKey[] = ['RSK', 'FoF', 'WU', 'SCK', 'SCK_HL'];
+const HASTED: WWKey[] = ['RSK', 'RSK_HL', 'FoF', 'WU', 'SCK', 'SCK_HL'];
 
 export const wwData = (haste: number) =>
   Object.fromEntries(

@@ -265,7 +265,7 @@
     "effects": [
       {}
     ],
-    "cast": 0.4,
+    "cast": 0.5,
     "gcd": 1,
     "cooldown": 30
   },
@@ -323,5 +323,14 @@
       {}
     ],
     "gcd": 1
+  },
+  {
+    "name": "RSK_HL",
+    "id": 999994,
+    "effects": [
+      {}
+    ],
+    "gcd": 1,
+    "cooldown": 10
   }
 ]

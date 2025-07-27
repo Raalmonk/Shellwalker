@@ -57,3 +57,12 @@ it('SCK_HL channel live updates', () => {
   setGearHastePercent(s, 0.50); // 1.5×
   expect(selectRemainingChannel(s, 'SCK_HL')).toBeLessThan(before);
 });
+
+it('SW channel unaffected by haste', () => {
+  setGearHastePercent(s, 0);
+  cast(s, 'SW');
+  advanceTime(s, 200);
+  const before = selectRemainingChannel(s, 'SW');
+  setGearHastePercent(s, 0.50);
+  expect(selectRemainingChannel(s, 'SW')).toBeCloseTo(before, 0);
+});

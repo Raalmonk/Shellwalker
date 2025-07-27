@@ -79,15 +79,16 @@ function recomputeTimeline(
     const ability = abilities[key];
     const ql = buffs.filter(b => b.key.endsWith('_BD'));
     const blessing = computeBlessingBuffs(ql);
-    const end = calcDynamicEndTime(
-      it.start,
-      ability.cast ?? 0,
-      buffs,
-      blessing,
-      haste,
-      key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
-    );
-    const dur = end - it.start;
+    const dur = ability.affectedByHaste
+      ? calcDynamicEndTime(
+          it.start,
+          ability.cast ?? 0,
+          buffs,
+          blessing,
+          haste,
+          key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
+        ) - it.start
+      : ability.cast ?? 0;
     const isGCD = ability.triggersGCD ?? true;
     const duration = dur > 0 ? dur : isGCD ? 1 : 0;
     const idx = items.findIndex(x => x.id === it.id);
@@ -116,7 +117,13 @@ function recomputeTimeline(
 
     const origCost = getOriginalChiCost(key);
     const actualCost = getActualChiCost(key, buffs, it.start);
-    const chiGain = key === 'TP' ? 2 : key === 'SEF' ? 2 : key === 'BLK_HL' ? 1 : 0;
+    const chiGain = key === 'TP'
+      ? 2
+      : key === 'SEF'
+        ? 2
+        : key === 'BLK_HL' || key === 'RSK_HL'
+          ? 1
+          : 0;
     if (actualCost > 0) chi = Math.max(0, chi - actualCost);
     chi = Math.min(6, chi + chiGain);
 
@@ -134,7 +141,7 @@ function recomputeTimeline(
       buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 5, src: it.id, multiplier: 1.3 });
     } else if (key === 'SEF') {
       buffs.push({ id: --nid, key: 'SEF', start: it.start, end: it.start + 15, label: 'SEF', group: 3, src: it.id });
-    } else if (key === 'RSK') {
+    } else if (key === 'RSK' || key === 'RSK_HL') {
       buffs.push({ id: --nid, key: 'Acclamation', start: it.start, end: it.start + 12, label: 'Acclamation', group: 4, src: it.id });
     } else if (key === 'Xuen') {
       buffs.push({ id: --nid, key: 'Xuen', start: it.start, end: it.start + 20, label: 'Xuen', group: 2, src: it.id, multiplier: 1.15 });
@@ -147,10 +154,13 @@ function recomputeTimeline(
     if (key === 'SEF') {
       casts['RSK'] = (casts['RSK'] || []).filter(c => getEndAt(c, buffs) <= it.start);
     }
-    casts[key] = [
-      ...(casts[key] || []),
-      { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult },
-    ];
+    const rec = { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult };
+    casts[key] = [...(casts[key] || []), rec];
+    if (key === 'RSK_HL') {
+      casts['RSK'] = [...(casts['RSK'] || []), rec];
+    } else if (key === 'RSK') {
+      casts['RSK_HL'] = [...(casts['RSK_HL'] || []), rec];
+    }
   }
   const total = Math.max(0, ...items.map(i => (i.end ?? i.start)));
   console.log('Recomputed full timeline from 0 to ' + total.toFixed(2) + 's');
@@ -286,6 +296,7 @@ export default function App() {
     SW: 10,
     FoF: 11,
     RSK: 11,
+    RSK_HL: 11,
     WU: 11,
     TP: 12,
     BOK: 12,
@@ -313,21 +324,22 @@ export default function App() {
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
-    else if (key === 'BLK_HL') chiGain = 1;
+    else if (key === 'BLK_HL' || key === 'RSK_HL') chiGain = 1;
 
     if (actualCost > 0 && chi < actualCost) {
       alert('Chi不足，无法施放技能');
       return;
     }
-    const endTime = calcDynamicEndTime(
-      now,
-      baseCast,
-      buffs,
-      blessingBuffs,
-      stats.haste,
-      key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
-    );
-    const castDur = endTime - now;
+    const castDur = ability.affectedByHaste
+      ? calcDynamicEndTime(
+          now,
+          baseCast,
+          buffs,
+          blessingBuffs,
+          stats.haste,
+          key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
+        ) - now
+      : baseCast;
     const isGCD = ability.triggersGCD ?? true;
     const duration = castDur > 0 ? castDur : isGCD ? 1 : 0;
     const itemType = castDur > 0 ? 'guide' : isGCD ? 'gcd' : undefined;
@@ -387,7 +399,7 @@ export default function App() {
     } else if (key === 'SEF') {
       extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF', group: 3, src: id } as any);
       setNextBuffId(nextBuffId - 1);
-    } else if (key === 'RSK') {
+    } else if (key === 'RSK' || key === 'RSK_HL') {
       extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now, end: now + 12, label: 'Acclamation', group: 4, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'Xuen') {
@@ -422,6 +434,8 @@ export default function App() {
 
     console.log(
       `[${now.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
+      (chiGain > 0 ? `, gained ${chiGain} Chi` : '') +
+      (key === 'RSK' || key === 'RSK_HL' ? ', Acclamation triggered' : '') +
       (extension > 0 ? `, SEF extended by ${extension.toFixed(2)}s` : '') +
       `, Chi now: ${Math.max(0, Math.min(6, chi - actualCost + chiGain))}`
     );
@@ -437,15 +451,13 @@ export default function App() {
       if (key === 'SEF') {
         out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= now);
       }
-      out[key] = [
-        ...(cdObj[key] || []),
-        {
-          id: String(id),
-          start: now,
-          base: cdDur,
-          haste: hasteMult,
-        },
-      ];
+      const rec = { id: String(id), start: now, base: cdDur, haste: hasteMult };
+      out[key] = [ ...(cdObj[key] || []), rec ];
+      if (key === 'RSK_HL') {
+        out['RSK'] = [ ...(out['RSK'] || []), rec ];
+      } else if (key === 'RSK') {
+        out['RSK_HL'] = [ ...(out['RSK_HL'] || []), rec ];
+      }
       return out;
     });
     setTime(now + (castDur > 0 ? castDur : isGCD ? 1 : 0.001));

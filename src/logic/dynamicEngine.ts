@@ -116,7 +116,7 @@ export function cast(state: RootState, abilityId: string) {
   } else if (abilityId === 'BL') {
     state.buffs.push({ key: 'BL', start: state.now, end: state.now + 40000, multiplier: 1.3 });
   }
-  if (ability.channelDynamic) {
+  if (ability.channelDynamic || ability.baseChannelMs) {
     state.channels.active[abilityId] = state.now;
   }
   if (ability.cooldownMs > 0) {

@@ -44,4 +44,20 @@ describe('AbilityPalette', () => {
     expect(alts).toContain('SCK_HL');
     root.unmount();
   });
+
+  it('shows RSK_HL next to RSK in majorFiller row', async () => {
+    const abilities = wwData(0);
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    const root = createRoot(div);
+    await act(async () => {
+      root.render(<AbilityPalette abilities={abilities} onUse={() => {}} />);
+    });
+    const majorRow = div.querySelector('[data-row="majorFiller"]');
+    expect(majorRow).toBeTruthy();
+    const alts = Array.from(majorRow!.querySelectorAll('img')).map(i => i.getAttribute('alt'));
+    expect(alts).toContain('RSK');
+    expect(alts).toContain('RSK_HL');
+    root.unmount();
+  });
 });

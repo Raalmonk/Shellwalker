@@ -96,6 +96,7 @@ function recomputeTimeline(
         ...items[idx],
         end: duration > 0 ? it.start + duration : undefined,
         type: duration > 0 ? 'guide' : undefined,
+        title: ability.cast && ability.cast > 0 ? `Cast Duration: ${dur.toFixed(2)}s` : undefined,
       };
 
     const recs = casts[key] || [];
@@ -179,6 +180,10 @@ export default function App() {
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
 
+  const [presetName, setPresetName] = useState('');
+  const [presets, setPresets] = useState<string[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState('');
+
   const chi = useSelector((state: RootState) => state.chi.value);
   const dispatch: AppDispatch = useDispatch();
 
@@ -197,6 +202,31 @@ export default function App() {
     document.body.classList.remove('dark', 'light');
     document.body.classList.add(theme);
   }, [theme]);
+
+  const loadPresets = () => {
+    const names: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('shellwalker_presets:') && key !== 'shellwalker_presets:lastUsed') {
+        names.push(key.split(':')[1]);
+      }
+    }
+    setPresets(names);
+  };
+
+  useEffect(() => {
+    loadPresets();
+    const last = localStorage.getItem('shellwalker_presets:lastUsed');
+    if (last) {
+      try {
+        const data = JSON.parse(last);
+        setItems(data.items || []);
+        setStats(data.stats || stats);
+        if (data.nextId) setNextId(data.nextId);
+        if (data.nextBuffId) setNextBuffId(data.nextBuffId);
+      } catch {}
+    }
+  }, []);
 
   const abilities = wwData(stats.haste);
 
@@ -567,6 +597,16 @@ export default function App() {
   }, [items, stats.haste]);
 
   useEffect(() => {
+    const data = {
+      items,
+      stats,
+      nextId,
+      nextBuffId,
+    };
+    localStorage.setItem('shellwalker_presets:lastUsed', JSON.stringify(data));
+  }, [items, stats, nextId, nextBuffId]);
+
+  useEffect(() => {
     const ro = new ResizeObserver(entries => {
       for (const e of entries) {
         const el = e.target as HTMLElement;
@@ -664,6 +704,33 @@ export default function App() {
   const update = (field: string, value: number) =>
     setStats(s => ({ ...s, [field]: value }));
 
+  const savePreset = () => {
+    if (!presetName.trim()) return;
+    const data = { items, stats, nextId, nextBuffId };
+    localStorage.setItem(`shellwalker_presets:${presetName.trim()}`, JSON.stringify(data));
+    loadPresets();
+  };
+
+  const loadPreset = () => {
+    if (!selectedPreset) return;
+    const json = localStorage.getItem(`shellwalker_presets:${selectedPreset}`);
+    if (!json) return;
+    try {
+      const data = JSON.parse(json);
+      setItems(data.items || []);
+      setStats(data.stats || stats);
+      setNextId(data.nextId || 1);
+      setNextBuffId(data.nextBuffId || -1);
+    } catch {}
+  };
+
+  const deletePreset = () => {
+    if (!selectedPreset) return;
+    localStorage.removeItem(`shellwalker_presets:${selectedPreset}`);
+    setSelectedPreset('');
+    loadPresets();
+  };
+
   return (
     <div className="app-layout">
       <aside className="sidebar p-4 space-y-4">
@@ -720,6 +787,33 @@ export default function App() {
           {showCD ? t('隐藏CD') : t('显示CD')}
         </button>
         <AbilityPalette abilities={abilities} onUse={click} />
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="font-bold">Presets</h2>
+        <div className="flex gap-2">
+          <input
+            value={presetName}
+            onChange={e => setPresetName(e.target.value)}
+            className="border p-1 text-black flex-1"
+            placeholder="Name"
+          />
+          <button onClick={savePreset} className="px-2 py-1 border rounded">Save</button>
+        </div>
+        <div className="flex gap-2">
+          <select
+            value={selectedPreset}
+            onChange={e => setSelectedPreset(e.target.value)}
+            className="text-black flex-1 border p-1"
+          >
+            <option value="">Select</option>
+            {presets.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+          <button onClick={loadPreset} className="px-2 py-1 border rounded">Load</button>
+          <button onClick={deletePreset} className="px-2 py-1 border rounded">Delete</button>
+        </div>
       </div>
 
       {selected !== null && (() => {

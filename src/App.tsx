@@ -87,8 +87,15 @@ function recomputeTimeline(
       key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
     );
     const dur = end - it.start;
+    const isGCD = ability.triggersGCD ?? true;
+    const duration = dur > 0 ? dur : isGCD ? 1 : 0;
     const idx = items.findIndex(x => x.id === it.id);
-    if (idx >= 0) items[idx] = { ...items[idx], end: dur > 0 ? it.start + dur : undefined };
+    if (idx >= 0)
+      items[idx] = {
+        ...items[idx],
+        end: duration > 0 ? it.start + duration : undefined,
+        type: duration > 0 ? 'guide' : undefined,
+      };
 
     const recs = casts[key] || [];
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
@@ -258,6 +265,8 @@ export default function App() {
       key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
     );
     const castDur = endTime - now;
+    const isGCD = ability.triggersGCD ?? true;
+    const duration = castDur > 0 ? castDur : isGCD ? 1 : 0;
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
     const active = cds.filter(cd => getEndAt(cd, buffs) > now);
@@ -283,11 +292,11 @@ export default function App() {
         id,
         group,
         start: now,
-        end: castDur > 0 ? now + castDur : undefined,
+        end: duration > 0 ? now + duration : undefined,
         label,
         ability: key,
         pendingDelete: false,
-        type: castDur > 0 ? 'guide' : undefined,
+        type: duration > 0 ? 'guide' : undefined,
       },
     ]);
     const extraBuffs: Buff[] = [];
@@ -368,7 +377,7 @@ export default function App() {
       ];
       return out;
     });
-    setTime(now + (castDur > 0 ? castDur : key === 'SEF' ? 0.001 : 1));
+    setTime(now + (castDur > 0 ? castDur : isGCD ? 1 : 0.001));
   };
 
   // vertical lines showing when a cooldown finishes

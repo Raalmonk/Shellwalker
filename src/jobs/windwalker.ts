@@ -23,8 +23,21 @@ const HASTED: WWKey[] = ['RSK', 'FoF', 'WU', 'SCK', 'SCK_HL'];
 
 export const wwData = (haste: number) =>
   Object.fromEntries(
-    Object.entries(WW).map(([k, id]) => [
-      k,
-      { ...getSpell(id, haste), affectedByHaste: HASTED.includes(k as WWKey) },
-    ])
-  ) as Record<WWKey, ReturnType<typeof getSpell> & { affectedByHaste: boolean }>;
+    Object.entries(WW).map(([k, id]) => {
+      const spell = getSpell(id, haste);
+      return [
+        k,
+        {
+          ...spell,
+          affectedByHaste: HASTED.includes(k as WWKey),
+          triggersGCD: spell.gcd !== 0,
+        },
+      ];
+    })
+  ) as Record<
+    WWKey,
+    ReturnType<typeof getSpell> & {
+      affectedByHaste: boolean;
+      triggersGCD: boolean;
+    }
+  >;

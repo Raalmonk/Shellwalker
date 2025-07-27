@@ -13,7 +13,6 @@ import { buildTimeline } from './lib/simulator';
 import { cdSpeedAt } from './lib/speed';
 import { fmt } from './util/fmt';
 import { computeBlessingSegments } from './util/blessingSegments';
-import { computeAcclamationSegments } from './util/acclamationSegments';
 import { SkillCast } from './types';
 import { AbilityIcon } from './components/AbilityIcon';
 import { AbilityPalette } from './components/AbilityPalette';
@@ -133,10 +132,6 @@ function recomputeTimeline(
       buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 2, src: it.id, multiplier: 1.3 });
     } else if (key === 'SEF') {
       buffs.push({ id: --nid, key: 'SEF', start: it.start, end: it.start + 15, label: 'SEF', group: 3, src: it.id });
-    } else if (key === 'RSK') {
-      buffs.push({ id: --nid, key: 'Acclamation', start: it.start + dur, end: it.start + dur + 12, label: 'Acclamation', group: 2, src: it.id });
-    } else if (key === 'Xuen') {
-      buffs.push({ id: --nid, key: 'XuenHaste', start: it.start, end: it.start + 20, label: 'Xuen', group: 1, src: it.id, multiplier: 1.15 });
     }
 
     const hasteMult = (ability as any).affectedByHaste
@@ -327,12 +322,6 @@ export default function App() {
     } else if (key === 'SEF') {
       extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF', group: 3, src: id } as any);
       setNextBuffId(nextBuffId - 1);
-    } else if (key === 'RSK') {
-      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now + castDur, end: now + castDur + 12, label: 'Acclamation', group: 2, src: id } as any);
-      setNextBuffId(nextBuffId - 1);
-    } else if (key === 'Xuen') {
-      extraBuffs.push({ id: nextBuffId, key: 'XuenHaste', start: now, end: now + 20, label: 'Xuen', group: 1, src: id, multiplier: 1.15 } as any);
-      setNextBuffId(nextBuffId - 1);
     }
 
     if (extraBuffs.length) {
@@ -427,8 +416,7 @@ export default function App() {
     : [];
 
   const qlBuffs = buffs.filter(b => b.key.endsWith('_BD'));
-  const acclamationBuffs = buffs.filter(b => b.key === 'Acclamation');
-  const otherBuffs = buffs.filter(b => !b.key.endsWith('_BD') && b.key !== 'Acclamation');
+  const otherBuffs = buffs.filter(b => !b.key.endsWith('_BD'));
 
   const blessingBuffs = React.useMemo(() => {
     const dragons = [...qlBuffs].sort((a, b) => a.start - b.start);
@@ -493,22 +481,9 @@ export default function App() {
     }));
   })();
 
-  const acclamationItems: TLItem[] = (() => {
-    const segs = computeAcclamationSegments(acclamationBuffs);
-    return segs.map((seg, i) => ({
-      id: 15500 + i,
-      group: 2,
-      start: seg.start,
-      end: seg.end,
-      label: `Acclamation ${seg.stacks * 3}%`,
-      className: 'buff',
-    }));
-  })();
-
   const buffItems: TLItem[] = [
     ...qlItems,
     ...blessingItems,
-    ...acclamationItems,
     ...otherBuffs.map(b => {
       const item: TLItem = {
         id: b.id,

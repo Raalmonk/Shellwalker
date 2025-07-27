@@ -8,6 +8,8 @@ export interface Ability {
   snapshot?: boolean;
   baseChannelMs?: number;
   channelDynamic?: boolean;
+  /** Whether the ability triggers the global cooldown */
+  triggersGCD?: boolean;
   row?: TimelineRow;
 }
 
@@ -65,5 +67,5 @@ export const ABILITIES: Record<string, Ability> = {
 export function abilityById(id: string): Ability {
   const a = ABILITIES[id];
   if (!a) throw new Error(`unknown ability ${id}`);
-  return a;
+  return { ...a, triggersGCD: a.triggersGCD ?? true };
 }

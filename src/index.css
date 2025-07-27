@@ -93,18 +93,21 @@ body.light {
 /* layout containers */
 .app-layout {
   display: flex;
-  height: 100vh;
+  align-items: flex-start;
+  min-height: 100vh;
   width: 100%;
 }
 
 .sidebar {
   flex: 0 0 25%;
   overflow-y: auto;
+  max-height: 100vh;
 }
 
 .timeline-container {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 /* larger timeline rows */
@@ -115,4 +118,15 @@ body.light {
 
 .vis-group {
   height: 48px;
+}
+
+/* ensure timeline event icons fit within row */
+.timeline-event-icon {
+  height: 100%;
+}
+
+.timeline-event-icon img {
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
 }

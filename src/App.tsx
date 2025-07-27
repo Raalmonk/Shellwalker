@@ -96,6 +96,7 @@ function recomputeTimeline(
         ...items[idx],
         end: duration > 0 ? it.start + duration : undefined,
         type: duration > 0 ? 'guide' : undefined,
+        ...(ability.cast ? { title: duration > 0 ? `Cast Duration: ${duration.toFixed(2)}s` : undefined } : {}),
       };
 
     const recs = casts[key] || [];
@@ -179,6 +180,11 @@ export default function App() {
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
 
+  const PRESET_PREFIX = 'shellwalker_presets:';
+  const [presetName, setPresetName] = useState('');
+  const [presetList, setPresetList] = useState<string[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState('');
+
   const chi = useSelector((state: RootState) => state.chi.value);
   const dispatch: AppDispatch = useDispatch();
 
@@ -197,6 +203,58 @@ export default function App() {
     document.body.classList.remove('dark', 'light');
     document.body.classList.add(theme);
   }, [theme]);
+
+  const updatePresetList = () => {
+    const names: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(PRESET_PREFIX)) {
+        names.push(key.slice(PRESET_PREFIX.length));
+      }
+    }
+    setPresetList(names);
+  };
+
+  const savePreset = () => {
+    if (!presetName) return;
+    const data = {
+      items,
+      stats,
+      duration,
+      viewStart,
+      nextId,
+      nextBuffId,
+    };
+    localStorage.setItem(
+      PRESET_PREFIX + presetName,
+      JSON.stringify(data),
+    );
+    updatePresetList();
+  };
+
+  const loadPreset = () => {
+    if (!selectedPreset) return;
+    const json = localStorage.getItem(PRESET_PREFIX + selectedPreset);
+    if (!json) return;
+    const data = JSON.parse(json);
+    setStats(data.stats || stats);
+    setItems(data.items || []);
+    setDuration(data.duration ?? 45);
+    setViewStart(data.viewStart ?? 0);
+    setNextId(data.nextId ?? (data.items ? Math.max(0, ...data.items.map((it: TLItem) => it.id)) + 1 : 1));
+    setNextBuffId(data.nextBuffId ?? -1);
+  };
+
+  const deletePreset = () => {
+    if (!selectedPreset) return;
+    localStorage.removeItem(PRESET_PREFIX + selectedPreset);
+    setSelectedPreset('');
+    updatePresetList();
+  };
+
+  useEffect(() => {
+    updatePresetList();
+  }, []);
 
   const abilities = wwData(stats.haste);
 
@@ -301,6 +359,7 @@ export default function App() {
         end: duration > 0 ? now + duration : undefined,
         label,
         ability: key,
+        ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(2)}s` } : {}),
         pendingDelete: false,
         type: itemType,
       },
@@ -720,6 +779,33 @@ export default function App() {
           {showCD ? t('隐藏CD') : t('显示CD')}
         </button>
         <AbilityPalette abilities={abilities} onUse={click} />
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-bold">Presets</h2>
+        <div className="flex gap-2">
+          <input
+            className="text-black flex-1"
+            placeholder="Name"
+            value={presetName}
+            onChange={e => setPresetName(e.target.value)}
+          />
+          <button onClick={savePreset} className="px-2 py-1 border rounded">Save Plan</button>
+        </div>
+        <div className="flex gap-2">
+          <select
+            className="text-black flex-1"
+            value={selectedPreset}
+            onChange={e => setSelectedPreset(e.target.value)}
+          >
+            <option value="">Select preset</option>
+            {presetList.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+          <button onClick={loadPreset} className="px-2 py-1 border rounded">Load</button>
+          <button onClick={deletePreset} className="px-2 py-1 border rounded">Delete</button>
+        </div>
       </div>
 
       {selected !== null && (() => {

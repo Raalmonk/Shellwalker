@@ -114,7 +114,7 @@ export const Timeline = ({
       groupDS.current,
       {
         stack: false,
-        height: "400px",
+        height: "100%",
         align: 'left',
         start: new Date(start * 1000),
         end: new Date(end * 1000),

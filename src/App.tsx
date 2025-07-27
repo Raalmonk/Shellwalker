@@ -628,7 +628,8 @@ export default function App() {
     setStats(s => ({ ...s, [field]: value }));
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="app-layout">
+      <aside className="sidebar p-4 space-y-4">
       <h1 className="text-xl font-bold">{t('踏风排轴器')}</h1>
       <h1 className="text-xl">{t('Boss时间轴选项')}</h1>
       <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -730,22 +731,25 @@ export default function App() {
         );
       })()}
 
-      <Timeline
-        items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
-        start={viewStart}
-        end={viewStart + duration}
-        cursor={time}
-        cds={cdLines}
-        showCD={showCD}
-        onCursorChange={setTime}
-        onRangeChange={(s, e) => {
-          setViewStart(s);
-          setDuration(e - s);
-        }}
-        onItemMove={moveItem}
-        onItemContext={contextItem}
-        onItemClick={selectItem}
-      />
+      </aside>
+      <main className="timeline-container p-4">
+        <Timeline
+          items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
+          start={viewStart}
+          end={viewStart + duration}
+          cursor={time}
+          cds={cdLines}
+          showCD={showCD}
+          onCursorChange={setTime}
+          onRangeChange={(s, e) => {
+            setViewStart(s);
+            setDuration(e - s);
+          }}
+          onItemMove={moveItem}
+          onItemContext={contextItem}
+          onItemClick={selectItem}
+        />
+      </main>
     </div>
   );
 }

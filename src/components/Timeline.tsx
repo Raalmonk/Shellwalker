@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { DataSet, Timeline as VisTimeline } from "vis-timeline/standalone";
 import type { DataItem, DataGroup } from "vis-timeline";
 import { GRID_STEP_MS } from "../constants/time";
+import { ROW_HEIGHT, ROW_COUNT, HEADER_HEIGHT } from "../constants/timelineLayout";
 
 // Item displayed on the timeline. `end` is optional so we can draw range
 // bars (used for cooldown visualization).
@@ -114,7 +115,7 @@ export const Timeline = ({
       groupDS.current,
       {
         stack: false,
-        height: "400px",
+        height: ROW_HEIGHT * ROW_COUNT + HEADER_HEIGHT + 'px',
         align: 'left',
         start: new Date(start * 1000),
         end: new Date(end * 1000),

@@ -93,7 +93,8 @@ body.light {
 /* layout containers */
 .app-layout {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   width: 100%;
 }
 
@@ -103,8 +104,8 @@ body.light {
 }
 
 .timeline-container {
-  flex: 1;
-  overflow: auto;
+  width: 75%;
+  overflow-y: auto;
 }
 
 /* larger timeline rows */

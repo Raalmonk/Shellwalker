@@ -19,6 +19,7 @@ import { AbilityPalette } from './components/AbilityPalette';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
 import { getOriginalChiCost, getActualChiCost } from './utils/chiCost';
+import { ROW_HEIGHT, ROW_COUNT, HEADER_HEIGHT } from './constants/timelineLayout';
 
 interface CalcBuff {
   id: number;
@@ -627,6 +628,8 @@ export default function App() {
   const update = (field: string, value: number) =>
     setStats(s => ({ ...s, [field]: value }));
 
+  const containerHeight = ROW_HEIGHT * ROW_COUNT + HEADER_HEIGHT;
+
   return (
     <div className="app-layout">
       <aside className="sidebar p-4 space-y-4">
@@ -731,7 +734,10 @@ export default function App() {
         );
       })()}
       </aside>
-      <main className="timeline-container">
+      <main
+        className="timeline-container"
+        style={{ height: containerHeight }}
+      >
         <Timeline
           items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
           start={viewStart}

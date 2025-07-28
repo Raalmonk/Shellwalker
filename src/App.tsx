@@ -21,6 +21,7 @@ import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
 import { getOriginalChiCost, getActualChiCost } from './utils/chiCost';
 import { exportSimcApl } from './utils/simcApl';
+import { downloadText } from './utils/download';
 
 interface CalcBuff {
   id: number;
@@ -738,13 +739,17 @@ export default function App() {
 
   const exportAPL = () => {
     const abilityItems = items.filter(i => i.ability) as TLItem[];
-    const apl = exportSimcApl(
-      abilityItems.map(it => ({ ability: it.ability!, start: it.start })),
-      abilities,
-    );
-    navigator.clipboard.writeText(apl).then(() => {
-      alert(t('导出SimC APL'));
-    });
+    let apl: string;
+    try {
+      apl = exportSimcApl(
+        abilityItems.map(it => ({ ability: it.ability!, start: it.start })),
+        abilities,
+      );
+    } catch (e) {
+      alert((e as Error).message);
+      return;
+    }
+    downloadText(apl, 'shellwalker_export.simc');
   };
 
   return (

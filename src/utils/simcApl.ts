@@ -11,6 +11,24 @@ export interface AplItem {
   start: number;
 }
 
+const SIMC_NAME_MAP: Record<string, string> = {
+  TP: 'tiger_palm',
+  FoF: 'fists_of_fury',
+  RSK: 'rising_sun_kick',
+  RSK_HL: 'rising_sun_kick',
+  BLK: 'blackout_kick',
+  BOK: 'blackout_kick',
+  BLK_HL: 'blackout_kick',
+  WU: 'whirling_dragon_punch',
+  AA: 'strike_of_the_windlord',
+  SW: 'slicing_winds',
+  SEF: 'storm_earth_and_fire',
+  Xuen: 'invoke_xuen_the_white_tiger',
+  CC: 'celestial_conduit',
+  SCK: 'spinning_crane_kick',
+  SCK_HL: 'spinning_crane_kick',
+};
+
 export function exportSimcApl(
   items: AplItem[],
   nameMap: Record<string, { name?: string }>,
@@ -19,8 +37,14 @@ export function exportSimcApl(
   let out = '';
   let prev = 0;
   sorted.forEach((it, idx) => {
-    const entryName = nameMap[it.ability]?.name || it.ability;
-    const simc = toSimcName(entryName);
+    let simc = SIMC_NAME_MAP[it.ability];
+    if (!simc) {
+      const entryName = nameMap[it.ability]?.name;
+      if (!entryName) {
+        throw new Error(`Unsupported ability ${it.ability}`);
+      }
+      simc = toSimcName(entryName);
+    }
     if (idx === 0) {
       out += `actions+=/${simc}\n`;
     } else {

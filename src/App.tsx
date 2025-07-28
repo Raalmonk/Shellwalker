@@ -20,6 +20,7 @@ import { AbilityPalette } from './components/AbilityPalette';
 import { ABILITY_ICON_MAP } from './constants/icons';
 import { t } from './i18n/en';
 import { getOriginalChiCost, getActualChiCost } from './utils/chiCost';
+import { exportSimcApl } from './utils/simcApl';
 
 interface CalcBuff {
   id: number;
@@ -735,6 +736,17 @@ export default function App() {
   const update = (field: string, value: number) =>
     setStats(s => ({ ...s, [field]: value }));
 
+  const exportAPL = () => {
+    const abilityItems = items.filter(i => i.ability) as TLItem[];
+    const apl = exportSimcApl(
+      abilityItems.map(it => ({ ability: it.ability!, start: it.start })),
+      abilities,
+    );
+    navigator.clipboard.writeText(apl).then(() => {
+      alert(t('导出SimC APL'));
+    });
+  };
+
   return (
     <div className="app-layout">
       <aside className="sidebar p-4 space-y-4">
@@ -817,6 +829,7 @@ export default function App() {
           </select>
           <button onClick={loadPreset} className="px-2 py-1 border rounded">Load</button>
           <button onClick={deletePreset} className="px-2 py-1 border rounded">Delete</button>
+          <button onClick={exportAPL} className="px-2 py-1 border rounded">{t('导出SimC APL')}</button>
         </div>
       </div>
 

@@ -20,6 +20,7 @@ export const zhToEn: Record<string, string> = {
   'CC青龙': 'CC Yolo',
   'cd没转好': 'CD not ready',
   '引导中不能施放其他技能': 'Cannot cast while channeling',
+  '导出SimC APL': 'Export SimC APL',
 };
 
 export function t(zh: string): string {

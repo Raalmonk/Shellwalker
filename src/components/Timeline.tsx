@@ -7,7 +7,7 @@ import { GRID_STEP_MS } from "../constants/time";
 // bars (used for cooldown visualization).
 export interface TLItem {
   id: number;
-  group: number; // group id 1-7
+  group: number; // group id 1-13
   start: number; // start time in seconds
   end?: number; // optional end time in seconds
   label: string;
@@ -23,12 +23,13 @@ import { t } from '../i18n/en';
 import { GUIDE_COLOR } from '../constants/colors';
 
 const groups = [
+  t('阶段'),
   'Haste',
   'Xuen',
   'SEF',
   'Acclamation',
   'Bloodlust',
-  t('Boss技能'),
+  t('Boss时间轴'),
   'Blessing',
   t('青龙之心'),
   'Major Cooldown',

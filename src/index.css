@@ -164,3 +164,12 @@ body.light {
   pointer-events: none;
   font-size: 12px;
 }
+
+.vis-item.boss-event .timeline-event-icon {
+  border: 2px solid #ff99cc;
+  border-radius: 4px;
+}
+
+.vis-item.phase-marker .vis-item-content {
+  font-weight: bold;
+}

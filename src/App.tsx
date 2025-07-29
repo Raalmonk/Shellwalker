@@ -191,6 +191,7 @@ export default function App() {
   interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; source?: string; }
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
+  const [autoAdjustMsg, setAutoAdjustMsg] = useState('');
 
   const PRESET_PREFIX = 'shellwalker_presets:';
   const [presetName, setPresetName] = useState('');
@@ -311,9 +312,21 @@ export default function App() {
   // handler when an ability button is clicked
   const click = (key: WWKey) => {
     const now = time;
+    let startTime = now;
+    while (isChanneling(startTime)) {
+      const conflicts = items.filter(
+        it => it.end !== undefined && startTime < it.end && startTime >= it.start,
+      );
+      if (!conflicts.length) break;
+      startTime = Math.max(...conflicts.map(it => it.end!));
+    }
+    if (startTime !== now) {
+      setAutoAdjustMsg(t('释放时间已自动调整至可用时间'));
+      setTimeout(() => setAutoAdjustMsg(''), 2000);
+    }
     const ability = abilities[key];
 
-    if (key === 'SEF' && buffs.some(b => b.key === 'SEF' && b.end > now)) {
+    if (key === 'SEF' && buffs.some(b => b.key === 'SEF' && b.end > startTime)) {
       alert('风火雷电正在持续');
       return;
     }
@@ -321,8 +334,8 @@ export default function App() {
     const baseCast = ability.cast ?? 0;
 
     const originalCost = getOriginalChiCost(key);
-    const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > now);
-    const actualCost = getActualChiCost(key, buffs, now);
+    const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > startTime);
+    const actualCost = getActualChiCost(key, buffs, startTime);
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
@@ -334,26 +347,26 @@ export default function App() {
     }
     const castDur = ability.affectedByHaste
       ? calcDynamicEndTime(
-          now,
+          startTime,
           baseCast,
           buffs,
           blessingBuffs,
           stats.haste,
           key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
-        ) - now
+        ) - startTime
       : baseCast;
     const isGCD = ability.triggersGCD ?? true;
     const duration = castDur > 0 ? castDur : isGCD ? 1 : 0;
     const itemType = castDur > 0 ? 'guide' : isGCD ? 'gcd' : undefined;
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
-    const active = cds.filter(cd => getEndAt(cd, buffs) > now);
+    const active = cds.filter(cd => getEndAt(cd, buffs) > startTime);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (active.length >= maxCharges) {
       alert(t('cd没转好'));
       return;
     }
-    if (isChanneling(now)) {
+    if (isChanneling(startTime)) {
       alert(t('引导中不能施放其他技能'));
       return;
     }
@@ -369,8 +382,8 @@ export default function App() {
       {
         id,
         group,
-        start: now,
-        end: duration > 0 ? now + duration : undefined,
+        start: startTime,
+        end: duration > 0 ? startTime + duration : undefined,
         label,
         ability: key,
         ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(2)}s` } : {}),
@@ -380,13 +393,13 @@ export default function App() {
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 8 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: startTime, end: startTime + 6, label: t('AA青龙'), src: id, group: 8 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 8 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: startTime + castDur, end: startTime + castDur + 8, label: t('SW青龙'), src: id, group: 8 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
-      const start = now + castDur;
+      const start = startTime + castDur;
       // convert AA buff if active
       setBuffs(bs => bs.map(b =>
         b.key === 'AA_BD' && b.start <= start && start < b.end
@@ -396,16 +409,16 @@ export default function App() {
       extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 8 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'BL') {
-      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 5, src: id, multiplier: 1.3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'BL', start: startTime, end: startTime + 40, label: 'Bloodlust', group: 5, src: id, multiplier: 1.3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SEF') {
-      extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF', group: 3, src: id } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SEF', start: startTime, end: startTime + 15, label: 'SEF', group: 3, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'RSK' || key === 'RSK_HL') {
-      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now, end: now + 12, label: 'Acclamation', group: 4, src: id } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: startTime, end: startTime + 12, label: 'Acclamation', group: 4, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'Xuen') {
-      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: now, end: now + 20, label: 'Xuen', group: 2, src: id, multiplier: 1.15 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: startTime, end: startTime + 20, label: 'Xuen', group: 2, src: id, multiplier: 1.15 } as any);
       setNextBuffId(nextBuffId - 1);
     }
 
@@ -429,13 +442,13 @@ export default function App() {
       extension = 0.25 * originalCost;
       setBuffs(bs =>
         bs.map(b =>
-          b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
+          b.key === 'SEF' && b.end > startTime ? { ...b, end: b.end + extension } : b
         )
       );
     }
 
     console.log(
-      `[${now.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
+      `[${startTime.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
       (chiGain > 0 ? `, gained ${chiGain} Chi` : '') +
       (key === 'RSK' || key === 'RSK_HL' ? ', Acclamation triggered' : '') +
       (extension > 0 ? `, SEF extended by ${extension.toFixed(2)}s` : '') +
@@ -445,15 +458,15 @@ export default function App() {
 
     const baseCd = ability.cooldown ?? 0;
     const hasteMult = (ability as any).affectedByHaste
-      ? hasteAt(now, [...buffs, ...blessingBuffs], stats.haste)
+      ? hasteAt(startTime, [...buffs, ...blessingBuffs], stats.haste)
       : 1;
     const cdDur = baseCd / hasteMult;
     setCasts(cdObj => {
       const out = { ...cdObj } as Record<string, SkillCast[]>;
       if (key === 'SEF') {
-        out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= now);
+        out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= startTime);
       }
-      const rec = { id: String(id), start: now, base: cdDur, haste: hasteMult };
+      const rec = { id: String(id), start: startTime, base: cdDur, haste: hasteMult };
       out[key] = [ ...(cdObj[key] || []), rec ];
       if (key === 'RSK_HL') {
         out['RSK'] = [ ...(out['RSK'] || []), rec ];
@@ -462,7 +475,7 @@ export default function App() {
       }
       return out;
     });
-    setTime(now + (castDur > 0 ? castDur : isGCD ? 1 : 0.001));
+    setTime(startTime + (castDur > 0 ? castDur : isGCD ? 1 : 0.001));
   };
 
   // vertical lines showing when a cooldown finishes
@@ -668,6 +681,17 @@ export default function App() {
         { casts, buffs },
         String(id),
       );
+    }
+    while (isChanneling(finalStart, id)) {
+      const conflicts = items.filter(
+        it => it.id !== id && it.end !== undefined && finalStart < it.end && finalStart >= it.start,
+      );
+      if (!conflicts.length) break;
+      finalStart = Math.max(...conflicts.map(it => it.end!));
+    }
+    if (finalStart !== snapStart) {
+      setAutoAdjustMsg(t('释放时间已自动调整至可用时间'));
+      setTimeout(() => setAutoAdjustMsg(''), 2000);
     }
     const newEnd = end ?? (target && target.end ? finalStart + prevDur : undefined);
     const notReady = abilityKey ? isOnCD(abilityKey, finalStart, id) : false;
@@ -885,6 +909,9 @@ export default function App() {
       })()}
       </aside>
       <main className="timeline-container">
+        {autoAdjustMsg && (
+          <div className="auto-adjust-toast">{autoAdjustMsg}</div>
+        )}
         <Timeline
           items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
           start={viewStart}

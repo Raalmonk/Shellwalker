@@ -155,6 +155,11 @@ function recomputeTimeline(
     const cdDur = (ability.cooldown ?? 0) / hasteMult;
     if (key === 'SEF') {
       casts['RSK'] = (casts['RSK'] || []).filter(c => getEndAt(c, buffs) <= it.start);
+      casts['RSK_HL'] = (casts['RSK_HL'] || []).filter(c => getEndAt(c, buffs) <= it.start);
+      console.log('SEF triggered cooldown reset on RSK and RSK_HL');
+      if (!casts['RSK_HL']) {
+        console.warn('RSK_HL not found for cooldown reset triggered by SEF');
+      }
     }
     const rec = { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult };
     casts[key] = [...(casts[key] || []), rec];
@@ -466,6 +471,11 @@ export default function App() {
       const out = { ...cdObj } as Record<string, SkillCast[]>;
       if (key === 'SEF') {
         out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= startTime);
+        out['RSK_HL'] = (out['RSK_HL'] || []).filter(cd => getEndAt(cd, buffs) <= startTime);
+        console.log('SEF triggered cooldown reset on RSK and RSK_HL');
+        if (!out['RSK_HL']) {
+          console.warn('RSK_HL not found for cooldown reset triggered by SEF');
+        }
       }
       const rec = { id: String(id), start: startTime, base: cdDur, haste: hasteMult };
       out[key] = [ ...(cdObj[key] || []), rec ];

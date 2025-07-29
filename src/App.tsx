@@ -196,6 +196,7 @@ export default function App() {
   const [presetName, setPresetName] = useState('');
   const [presetList, setPresetList] = useState<string[]>([]);
   const [selectedPreset, setSelectedPreset] = useState('');
+  const [autoAdjustMsg, setAutoAdjustMsg] = useState('');
 
   const chi = useSelector((state: RootState) => state.chi.value);
   const dispatch: AppDispatch = useDispatch();
@@ -310,8 +311,22 @@ export default function App() {
 
   // handler when an ability button is clicked
   const click = (key: WWKey) => {
-    const now = time;
     const ability = abilities[key];
+    const origStart = time;
+    let now = origStart;
+    if (isChanneling(now)) {
+      while (true) {
+        const conflicts = items.filter(
+          it => it.end !== undefined && now < it.end && now >= it.start,
+        );
+        if (conflicts.length === 0) break;
+        now = Math.max(...conflicts.map(it => it.end!));
+      }
+      if (now !== origStart) {
+        setAutoAdjustMsg(t('释放时间已自动调整至可用时间'));
+        setTimeout(() => setAutoAdjustMsg(''), 2000);
+      }
+    }
 
     if (key === 'SEF' && buffs.some(b => b.key === 'SEF' && b.end > now)) {
       alert('风火雷电正在持续');
@@ -351,10 +366,6 @@ export default function App() {
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (active.length >= maxCharges) {
       alert(t('cd没转好'));
-      return;
-    }
-    if (isChanneling(now)) {
-      alert(t('引导中不能施放其他技能'));
       return;
     }
     const icon = ABILITY_ICON_MAP[key];
@@ -808,6 +819,9 @@ export default function App() {
           {showCD ? t('隐藏CD') : t('显示CD')}
         </button>
         <AbilityPalette abilities={abilities} onUse={click} />
+        {autoAdjustMsg && (
+          <div className="auto-adjust-toast">{autoAdjustMsg}</div>
+        )}
       </div>
 
       <div className="space-y-2">

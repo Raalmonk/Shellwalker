@@ -20,6 +20,8 @@ export const zhToEn: Record<string, string> = {
   'CC青龙': 'CC Yolo',
   'cd没转好': 'CD not ready',
   '引导中不能施放其他技能': 'Cannot cast while channeling',
+  '释放时间已自动调整至可用时间':
+    'Cast time has been auto-adjusted to the next available time',
   '导出SimC APL': 'Export SimC APL',
 };
 

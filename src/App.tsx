@@ -192,6 +192,7 @@ export default function App() {
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
   const [autoAdjustMsg, setAutoAdjustMsg] = useState('');
+  const [compactViewMode, setCompactViewMode] = useState(false);
 
   const PRESET_PREFIX = 'shellwalker_presets:';
   const [presetName, setPresetName] = useState('');
@@ -512,6 +513,9 @@ export default function App() {
         }))
       )
     : [];
+  const filteredCdBars = compactViewMode
+    ? cdBars.filter(b => b.group === 9 || b.group === 10)
+    : cdBars;
 
   const qlBuffs = buffs.filter(b => b.key.endsWith('_BD'));
   const acclamationBuffs = buffs.filter(b => b.key === 'Acclamation');
@@ -640,6 +644,14 @@ export default function App() {
     }
     return res;
   })();
+
+  const visibleAbilityItems: TLItem[] = compactViewMode
+    ? items
+        .filter(i => i.group === 9 || i.group === 10)
+        .map(it => ({ ...it, end: undefined, type: 'box' }))
+    : items;
+
+  const visibleCdBars = filteredCdBars;
 
   useEffect(() => {
     const { items: newItems, buffs: newBuffs, casts: newCasts, chi: newChi } =
@@ -913,7 +925,7 @@ export default function App() {
           <div className="auto-adjust-toast">{autoAdjustMsg}</div>
         )}
         <Timeline
-          items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
+          items={[...hasteItems, ...visibleAbilityItems, ...buffItems, ...visibleCdBars]}
           start={viewStart}
           end={viewStart + duration}
           cursor={time}
@@ -923,6 +935,13 @@ export default function App() {
           onRangeChange={(s, e) => {
             setViewStart(s);
             setDuration(e - s);
+            if (e - s > 60 && !compactViewMode) {
+              setCompactViewMode(true);
+              setAutoAdjustMsg(t('已切换为简化视图模式，仅显示主技能。'));
+              setTimeout(() => setAutoAdjustMsg(''), 2000);
+            } else if (e - s <= 60 && compactViewMode) {
+              setCompactViewMode(false);
+            }
           }}
           onItemMove={moveItem}
           onItemContext={contextItem}

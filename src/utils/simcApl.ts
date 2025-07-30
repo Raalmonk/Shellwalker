@@ -18,7 +18,7 @@ const SIMC_NAME_MAP: Record<string, string> = {
   RSK_HL: 'rising_sun_kick',
   BLK: 'blackout_kick',
   BOK: 'blackout_kick',
-  BLK_HL: 'blackout_kick',
+  BOK_HL: 'blackout_kick',
   WU: 'whirling_dragon_punch',
   AA: 'strike_of_the_windlord',
   SW: 'slicing_winds',

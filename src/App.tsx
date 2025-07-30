@@ -129,7 +129,7 @@ function recomputeTimeline(
       ? 2
       : key === 'SEF'
         ? 2
-        : key === 'BLK_HL' || key === 'RSK_HL'
+        : key === 'BOK_HL' || key === 'RSK_HL'
           ? 1
           : 0;
     if (actualCost > 0) chi = Math.max(0, chi - actualCost);
@@ -167,23 +167,35 @@ function recomputeTimeline(
         console.warn('RSK_HL not found for cooldown reset triggered by SEF');
       }
     }
-    if (key === 'BOK' || key === 'BLK_HL') {
+    if (key === 'BOK' || key === 'BOK_HL') {
       const reduction = cdSpeedAt(it.start, buffs);
-      const applyReduce = (list: SkillCast[] = []) =>
+      let fofReduced = 0;
+      let rskReduced = 0;
+      const applyReduce = (
+        list: SkillCast[] = [],
+        track: (diff: number) => void,
+      ) =>
         list
           .map(cd => {
             const end = getEndAt(cd, buffs);
             if (end <= it.start) return cd;
             const newEnd = Math.max(it.start, end - reduction);
+            track(end - newEnd);
             if (newEnd <= cd.start) return null;
             const newBase = cdProgress(cd.start, newEnd, buffs, cdSpeedAt);
             return { ...cd, base: newBase };
           })
           .filter(Boolean) as SkillCast[];
-      casts['FoF'] = applyReduce(casts['FoF']);
-      const rsk = applyReduce(casts['RSK']);
+      casts['FoF'] = applyReduce(casts['FoF'], d => (fofReduced += d));
+      const rsk = applyReduce(casts['RSK'], d => (rskReduced += d));
       casts['RSK'] = rsk;
       casts['RSK_HL'] = rsk;
+      if (idx >= 0) {
+        items[idx] = {
+          ...items[idx],
+          title: `FoF -${fofReduced.toFixed(2)}s, RSK -${rskReduced.toFixed(2)}s`,
+        };
+      }
     }
     const rec = { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult };
     casts[key] = [...(casts[key] || []), rec];
@@ -353,7 +365,7 @@ export default function App() {
     BOK: 13,
     SCK: 13,
     SCK_HL: 13,
-    BLK_HL: 13,
+    BOK_HL: 13,
     BL: 6,
   };
 
@@ -387,7 +399,7 @@ export default function App() {
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
-    else if (key === 'BLK_HL' || key === 'RSK_HL') chiGain = 1;
+    else if (key === 'BOK_HL' || key === 'RSK_HL') chiGain = 1;
 
     if (actualCost > 0 && chi < actualCost) {
       alert('Chi不足，无法施放技能');
@@ -482,7 +494,7 @@ export default function App() {
     if (actualCost > 0) {
       dispatch(spendChi(actualCost));
     }
-    if (key === 'BLK_HL') {
+    if (key === 'BOK_HL') {
       dispatch(gainChi(1));
     } else if (chiGain > 0) {
       dispatch(gainChi(chiGain));
@@ -520,23 +532,41 @@ export default function App() {
           console.warn('RSK_HL not found for cooldown reset triggered by SEF');
         }
       }
-      if (key === 'BOK' || key === 'BLK_HL') {
+      if (key === 'BOK' || key === 'BOK_HL') {
         const reduction = cdSpeedAt(startTime, buffs);
-        const applyReduce = (list: SkillCast[] = []) =>
+        let fofReduced = 0;
+        let rskReduced = 0;
+        const applyReduce = (
+          list: SkillCast[] = [],
+          track: (diff: number) => void,
+        ) =>
           list
             .map(cd => {
               const end = getEndAt(cd, buffs);
               if (end <= startTime) return cd;
               const newEnd = Math.max(startTime, end - reduction);
+              track(end - newEnd);
               if (newEnd <= cd.start) return null;
               const newBase = cdProgress(cd.start, newEnd, buffs, cdSpeedAt);
               return { ...cd, base: newBase };
             })
             .filter(Boolean) as SkillCast[];
-        out['FoF'] = applyReduce(out['FoF']);
-        const rsk = applyReduce(out['RSK']);
+        out['FoF'] = applyReduce(out['FoF'], d => (fofReduced += d));
+        const rsk = applyReduce(out['RSK'], d => (rskReduced += d));
         out['RSK'] = rsk;
         out['RSK_HL'] = rsk;
+        setItems(items =>
+          items.map(it =>
+            it.id === id
+              ? {
+                  ...it,
+                  title: `FoF -${fofReduced.toFixed(2)}s, RSK -${rskReduced.toFixed(
+                    2,
+                  )}s`,
+                }
+              : it,
+          ),
+        );
       }
       const rec = { id: String(id), start: startTime, base: cdDur, haste: hasteMult };
       out[key] = [ ...(cdObj[key] || []), rec ];

@@ -44,8 +44,7 @@
       "chi": 3
     },
     "range": 5,
-    "gcd": 1.5,
-    "cooldown": 3
+    "gcd": 1.5
   },
   {
     "name": "Flying Serpent Kick",
@@ -317,7 +316,7 @@
     "cast": 1.5
   },
   {
-    "name": "BLK_HL",
+    "name": "BOK_HL",
     "id": 999997,
     "effects": [
       {}

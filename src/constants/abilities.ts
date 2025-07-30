@@ -54,10 +54,10 @@ export const ABILITIES: Record<string, Ability> = {
     channelDynamic: true,
     row: 'minorFiller',
   },
-  BLK_HL: {
-    id: 'BLK_HL',
+  BOK_HL: {
+    id: 'BOK_HL',
     name: 'Blackout Kick HL',
-    iconKey: 'BLK_HL',
+    iconKey: 'BOK_HL',
     cooldownMs: 0,
     baseChannelMs: 0,
     channelDynamic: false,

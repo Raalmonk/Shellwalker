@@ -103,7 +103,7 @@ function recomputeTimeline(
         ...items[idx],
         end: duration > 0 ? it.start + duration : undefined,
         type: duration > 0 ? 'guide' : undefined,
-        ...(ability.cast ? { title: duration > 0 ? `Cast Duration: ${duration.toFixed(2)}s` : undefined } : {}),
+        ...(ability.cast ? { title: duration > 0 ? `Cast Duration: ${duration.toFixed(1)}s` : undefined } : {}),
         className: baseCls.join(' '),
       };
     }
@@ -193,7 +193,7 @@ function recomputeTimeline(
       if (idx >= 0) {
         items[idx] = {
           ...items[idx],
-          title: `FoF -${fofReduced.toFixed(2)}s, RSK -${rskReduced.toFixed(2)}s`,
+          title: `FoF -${fofReduced.toFixed(1)}s, RSK -${rskReduced.toFixed(1)}s`,
         };
       }
     }
@@ -206,7 +206,7 @@ function recomputeTimeline(
     }
   }
   const total = Math.max(0, ...items.map(i => (i.end ?? i.start)));
-  console.log('Recomputed full timeline from 0 to ' + total.toFixed(2) + 's');
+  console.log('Recomputed full timeline from 0 to ' + total.toFixed(1) + 's');
   return { items, buffs, casts, chi };
 }
 
@@ -251,9 +251,7 @@ export default function App() {
   }, [dispatch]);
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
-    const s = Math.floor(sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    return `${sec.toFixed(1)}s`;
   };
 
 
@@ -447,7 +445,7 @@ export default function App() {
         label,
         ability: key,
         className: key,
-        ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(2)}s` } : {}),
+        ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(1)}s` } : {}),
         pendingDelete: false,
         type: itemType,
       },
@@ -512,7 +510,7 @@ export default function App() {
       `[${startTime.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
       (chiGain > 0 ? `, gained ${chiGain} Chi` : '') +
       (key === 'RSK' || key === 'RSK_HL' ? ', Acclamation triggered' : '') +
-      (extension > 0 ? `, SEF extended by ${extension.toFixed(2)}s` : '') +
+      (extension > 0 ? `, SEF extended by ${extension.toFixed(1)}s` : '') +
       `, Chi now: ${Math.max(0, Math.min(6, chi - actualCost + chiGain))}`
     );
 
@@ -560,8 +558,8 @@ export default function App() {
             it.id === id
               ? {
                   ...it,
-                  title: `FoF -${fofReduced.toFixed(2)}s, RSK -${rskReduced.toFixed(
-                    2,
+                  title: `FoF -${fofReduced.toFixed(1)}s, RSK -${rskReduced.toFixed(
+                    1,
                   )}s`,
                 }
               : it,
@@ -668,7 +666,7 @@ export default function App() {
           group: 9,
           start: s,
           end: e,
-          label: `+${extra.toFixed(2)}s/s`,
+          label: `+${extra.toFixed(1)}s/s`,
           className: 'buff',
         });
       }

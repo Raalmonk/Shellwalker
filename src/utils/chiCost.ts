@@ -12,14 +12,14 @@ export function getOriginalChiCost(key: string): number {
     case 'FoF': return 3;
     case 'SCK': return 2;
     case 'AA': return 2;
-    case 'BLK_HL': return 1;
+    case 'BOK_HL': return 1;
     case 'SCK_HL': return 2;
     default: return 0;
   }
 }
 
 export function getActualChiCost(key: string, buffs: Buff[], now: number): number {
-  if (key === 'BLK_HL') return 0;
+  if (key === 'BOK_HL') return 0;
   if (key === 'SCK_HL') {
     // SCK_HL never costs Chi
     return 0;

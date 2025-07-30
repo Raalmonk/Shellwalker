@@ -12,7 +12,7 @@ export const WW = {
   RSK: 107428,
   FoF: 113656,
   BL: 999998,
-  BLK_HL: 999997,
+  BOK_HL: 999997,
   SCK: 999996,
   SCK_HL: 999995,
   RSK_HL: 999994,

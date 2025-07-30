@@ -11,6 +11,7 @@ import { GRID_STEP_MS, } from './constants/time';
 import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
 import { buildTimeline } from './lib/simulator';
 import { cdSpeedAt } from './lib/speed';
+import { cdBaseBetween } from './lib/cooldown';
 import { fmt } from './util/fmt';
 import { computeBlessingSegments } from './util/blessingSegments';
 import { computeAcclamationSegments } from './util/acclamationSegments';
@@ -165,6 +166,24 @@ function recomputeTimeline(
       if (!casts['RSK_HL']) {
         console.warn('RSK_HL not found for cooldown reset triggered by SEF');
       }
+    }
+    if (key === 'BOK' || key === 'BLK_HL') {
+      const reduction = cdSpeedAt(it.start, buffs);
+      const shorten = (arr: SkillCast[] = []) =>
+        arr
+          .map(c => {
+            const end = getEndAt(c, buffs);
+            if (end <= it.start) return c;
+            const newEnd = Math.max(it.start, end - reduction);
+            if (newEnd <= it.start) return null;
+            const base = cdBaseBetween(it.start, newEnd, buffs, (t, b) => cdSpeedAt(t, b as any));
+            return { ...c, start: it.start, base };
+          })
+          .filter(Boolean) as SkillCast[];
+      casts['FoF'] = shorten(casts['FoF']);
+      const rsk = shorten(casts['RSK']);
+      casts['RSK'] = rsk;
+      casts['RSK_HL'] = rsk.map(c => c);
     }
     const rec = { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult };
     casts[key] = [...(casts[key] || []), rec];
@@ -500,6 +519,24 @@ export default function App() {
         if (!out['RSK_HL']) {
           console.warn('RSK_HL not found for cooldown reset triggered by SEF');
         }
+      }
+      if (key === 'BOK' || key === 'BLK_HL') {
+        const reduction = cdSpeedAt(startTime, buffs);
+        const shorten = (arr: SkillCast[] = []) =>
+          arr
+            .map(c => {
+              const end = getEndAt(c, buffs);
+              if (end <= startTime) return c;
+              const newEnd = Math.max(startTime, end - reduction);
+              if (newEnd <= startTime) return null;
+              const base = cdBaseBetween(startTime, newEnd, buffs, (t, b) => cdSpeedAt(t, b as any));
+              return { ...c, start: startTime, base };
+            })
+            .filter(Boolean) as SkillCast[];
+        out['FoF'] = shorten(out['FoF']);
+        const rsk = shorten(out['RSK']);
+        out['RSK'] = rsk;
+        out['RSK_HL'] = rsk.map(c => c);
       }
       const rec = { id: String(id), start: startTime, base: cdDur, haste: hasteMult };
       out[key] = [ ...(cdObj[key] || []), rec ];

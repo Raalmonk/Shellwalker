@@ -11,6 +11,7 @@ import { GRID_STEP_MS, } from './constants/time';
 import { getNextAvailableCastTime, roundToGridMs } from './utils/timeline';
 import { buildTimeline } from './lib/simulator';
 import { cdSpeedAt } from './lib/speed';
+import { cdProgress } from './lib/cooldown';
 import { fmt } from './util/fmt';
 import { computeBlessingSegments } from './util/blessingSegments';
 import { computeAcclamationSegments } from './util/acclamationSegments';
@@ -165,6 +166,24 @@ function recomputeTimeline(
       if (!casts['RSK_HL']) {
         console.warn('RSK_HL not found for cooldown reset triggered by SEF');
       }
+    }
+    if (key === 'BOK' || key === 'BLK_HL') {
+      const reduction = cdSpeedAt(it.start, buffs);
+      const applyReduce = (list: SkillCast[] = []) =>
+        list
+          .map(cd => {
+            const end = getEndAt(cd, buffs);
+            if (end <= it.start) return cd;
+            const newEnd = Math.max(it.start, end - reduction);
+            if (newEnd <= cd.start) return null;
+            const newBase = cdProgress(cd.start, newEnd, buffs, cdSpeedAt);
+            return { ...cd, base: newBase };
+          })
+          .filter(Boolean) as SkillCast[];
+      casts['FoF'] = applyReduce(casts['FoF']);
+      const rsk = applyReduce(casts['RSK']);
+      casts['RSK'] = rsk;
+      casts['RSK_HL'] = rsk;
     }
     const rec = { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult };
     casts[key] = [...(casts[key] || []), rec];
@@ -500,6 +519,24 @@ export default function App() {
         if (!out['RSK_HL']) {
           console.warn('RSK_HL not found for cooldown reset triggered by SEF');
         }
+      }
+      if (key === 'BOK' || key === 'BLK_HL') {
+        const reduction = cdSpeedAt(startTime, buffs);
+        const applyReduce = (list: SkillCast[] = []) =>
+          list
+            .map(cd => {
+              const end = getEndAt(cd, buffs);
+              if (end <= startTime) return cd;
+              const newEnd = Math.max(startTime, end - reduction);
+              if (newEnd <= cd.start) return null;
+              const newBase = cdProgress(cd.start, newEnd, buffs, cdSpeedAt);
+              return { ...cd, base: newBase };
+            })
+            .filter(Boolean) as SkillCast[];
+        out['FoF'] = applyReduce(out['FoF']);
+        const rsk = applyReduce(out['RSK']);
+        out['RSK'] = rsk;
+        out['RSK_HL'] = rsk;
       }
       const rec = { id: String(id), start: startTime, base: cdDur, haste: hasteMult };
       out[key] = [ ...(cdObj[key] || []), rec ];

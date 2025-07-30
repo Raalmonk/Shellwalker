@@ -10,7 +10,8 @@ export const zhToEn: Record<string, string> = {
   '显示CD': 'Show CD',
   '释放时间': 'Cast Time',
   '转好时间': 'Ready At',
-  'Boss技能': 'Boss Abilities',
+  'Boss时间轴': 'Boss Timeline',
+  '阶段': 'Phases',
   '祝福': 'Blessing',
   Buffs: 'Buffs',
   '青龙之心': "Yolo's Heart",
@@ -20,7 +21,10 @@ export const zhToEn: Record<string, string> = {
   'CC青龙': 'CC Yolo',
   'cd没转好': 'CD not ready',
   '引导中不能施放其他技能': 'Cannot cast while channeling',
+  '释放时间已自动调整至可用时间': 'Cast time has been auto-adjusted to the next available time',
   '导出SimC APL': 'Export SimC APL',
+  '已切换为简化视图模式，仅显示主技能。':
+    'Switched to compact view mode, only main skills are shown.',
 };
 
 export function t(zh: string): string {

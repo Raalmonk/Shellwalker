@@ -46,7 +46,7 @@ function computeBlessingBuffs(dragons: CalcBuff[]): CalcBuff[] {
       start,
       end,
       label: t('祝福'),
-      group: 7,
+      group: 8,
       multiplier: 1.15,
       source,
     });
@@ -132,21 +132,21 @@ function recomputeTimeline(
     if (sefActiveBuff && origCost > 0) sefActiveBuff.end += 0.25 * origCost;
 
     if (key === 'AA') {
-      buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 8, src: it.id });
+      buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 9, src: it.id });
     } else if (key === 'SW') {
-      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 8, src: it.id });
+      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 9, src: it.id });
     } else if (key === 'CC') {
       const start = it.start + dur;
       buffs = buffs.map(b => (b.key === 'AA_BD' && b.start <= start && start < b.end ? { ...b, end: start } : b));
-      buffs.push({ id: --nid, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), group: 8, src: it.id });
+      buffs.push({ id: --nid, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), group: 9, src: it.id });
     } else if (key === 'BL') {
-      buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 5, src: it.id, multiplier: 1.3 });
+      buffs.push({ id: --nid, key: 'BL', start: it.start, end: it.start + 40, label: 'Bloodlust', group: 6, src: it.id, multiplier: 1.3 });
     } else if (key === 'SEF') {
-      buffs.push({ id: --nid, key: 'SEF', start: it.start, end: it.start + 15, label: 'SEF', group: 3, src: it.id });
+      buffs.push({ id: --nid, key: 'SEF', start: it.start, end: it.start + 15, label: 'SEF', group: 4, src: it.id });
     } else if (key === 'RSK' || key === 'RSK_HL') {
-      buffs.push({ id: --nid, key: 'Acclamation', start: it.start, end: it.start + 12, label: 'Acclamation', group: 4, src: it.id });
+      buffs.push({ id: --nid, key: 'Acclamation', start: it.start, end: it.start + 12, label: 'Acclamation', group: 5, src: it.id });
     } else if (key === 'Xuen') {
-      buffs.push({ id: --nid, key: 'Xuen', start: it.start, end: it.start + 20, label: 'Xuen', group: 2, src: it.id, multiplier: 1.15 });
+      buffs.push({ id: --nid, key: 'Xuen', start: it.start, end: it.start + 20, label: 'Xuen', group: 3, src: it.id, multiplier: 1.15 });
     }
 
     const hasteMult = (ability as any).affectedByHaste
@@ -155,6 +155,11 @@ function recomputeTimeline(
     const cdDur = (ability.cooldown ?? 0) / hasteMult;
     if (key === 'SEF') {
       casts['RSK'] = (casts['RSK'] || []).filter(c => getEndAt(c, buffs) <= it.start);
+      casts['RSK_HL'] = (casts['RSK_HL'] || []).filter(c => getEndAt(c, buffs) <= it.start);
+      console.log('SEF triggered cooldown reset on RSK and RSK_HL');
+      if (!casts['RSK_HL']) {
+        console.warn('RSK_HL not found for cooldown reset triggered by SEF');
+      }
     }
     const rec = { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult };
     casts[key] = [...(casts[key] || []), rec];
@@ -191,11 +196,16 @@ export default function App() {
   interface Buff { id:number; key:string; start:number; end:number; label:string; group:number; src?:number; multiplier?: number; source?: string; }
   const [buffs, setBuffs] = useState<Buff[]>([]);
   const [nextBuffId, setNextBuffId] = useState(-1);
+  const [autoAdjustMsg, setAutoAdjustMsg] = useState('');
+  const [compactViewMode, setCompactViewMode] = useState(false);
 
   const PRESET_PREFIX = 'shellwalker_presets:';
   const [presetName, setPresetName] = useState('');
   const [presetList, setPresetList] = useState<string[]>([]);
   const [selectedPreset, setSelectedPreset] = useState('');
+  const [bossUrl, setBossUrl] = useState('');
+  interface BossTimeline { name:string; phases:{label:string; start:number}[]; timeline:{start:number; icon:string; label:string}[]; }
+  const [bossData, setBossData] = useState<BossTimeline | null>(null);
 
   const chi = useSelector((state: RootState) => state.chi.value);
   const dispatch: AppDispatch = useDispatch();
@@ -227,15 +237,29 @@ export default function App() {
     setPresetList(names);
   };
 
+  const loadBoss = async (url: string) => {
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      setBossData(data);
+      setBossUrl(url);
+    } catch (e) {
+      alert('无法加载 Boss 时间轴文件');
+      setBossData(null);
+    }
+  };
+
   const savePreset = () => {
     if (!presetName) return;
     const data = {
-      items,
+      items: items.filter(it => it.ability),
       stats,
       duration,
       viewStart,
       nextId,
       nextBuffId,
+      bossTimelineFile: bossUrl,
     };
     localStorage.setItem(
       PRESET_PREFIX + presetName,
@@ -255,6 +279,7 @@ export default function App() {
     setViewStart(data.viewStart ?? 0);
     setNextId(data.nextId ?? (data.items ? Math.max(0, ...data.items.map((it: TLItem) => it.id)) + 1 : 1));
     setNextBuffId(data.nextBuffId ?? -1);
+    if (data.bossTimelineFile) loadBoss(data.bossTimelineFile);
   };
 
   const deletePreset = () => {
@@ -291,29 +316,41 @@ export default function App() {
 
   // mapping from ability key to timeline group
   const groupMap: Record<WWKey, number> = {
-    Xuen: 9,
-    SEF: 9,
-    CC: 9,
-    AA: 10,
-    SW: 10,
-    FoF: 11,
-    RSK: 11,
-    RSK_HL: 11,
-    WU: 11,
-    TP: 12,
-    BOK: 12,
-    SCK: 12,
-    SCK_HL: 12,
-    BLK_HL: 12,
-    BL: 5,
+    Xuen: 10,
+    SEF: 10,
+    CC: 10,
+    AA: 11,
+    SW: 11,
+    FoF: 12,
+    RSK: 12,
+    RSK_HL: 12,
+    WU: 12,
+    TP: 13,
+    BOK: 13,
+    SCK: 13,
+    SCK_HL: 13,
+    BLK_HL: 13,
+    BL: 6,
   };
 
   // handler when an ability button is clicked
   const click = (key: WWKey) => {
     const now = time;
+    let startTime = now;
+    while (isChanneling(startTime)) {
+      const conflicts = items.filter(
+        it => it.end !== undefined && startTime < it.end && startTime >= it.start,
+      );
+      if (!conflicts.length) break;
+      startTime = Math.max(...conflicts.map(it => it.end!));
+    }
+    if (startTime !== now) {
+      setAutoAdjustMsg(t('释放时间已自动调整至可用时间'));
+      setTimeout(() => setAutoAdjustMsg(''), 2000);
+    }
     const ability = abilities[key];
 
-    if (key === 'SEF' && buffs.some(b => b.key === 'SEF' && b.end > now)) {
+    if (key === 'SEF' && buffs.some(b => b.key === 'SEF' && b.end > startTime)) {
       alert('风火雷电正在持续');
       return;
     }
@@ -321,8 +358,8 @@ export default function App() {
     const baseCast = ability.cast ?? 0;
 
     const originalCost = getOriginalChiCost(key);
-    const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > now);
-    const actualCost = getActualChiCost(key, buffs, now);
+    const sefActiveBuff = buffs.find(b => b.key === 'SEF' && b.end > startTime);
+    const actualCost = getActualChiCost(key, buffs, startTime);
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
@@ -334,26 +371,26 @@ export default function App() {
     }
     const castDur = ability.affectedByHaste
       ? calcDynamicEndTime(
-          now,
+          startTime,
           baseCast,
           buffs,
           blessingBuffs,
           stats.haste,
           key === 'FoF' ? ['AA_BD', 'SW_BD', 'CC_BD'] : [],
-        ) - now
+        ) - startTime
       : baseCast;
     const isGCD = ability.triggersGCD ?? true;
     const duration = castDur > 0 ? castDur : isGCD ? 1 : 0;
     const itemType = castDur > 0 ? 'guide' : isGCD ? 'gcd' : undefined;
     // existing cooldown records for this ability (keep history)
     const cds = casts[key] || [];
-    const active = cds.filter(cd => getEndAt(cd, buffs) > now);
+    const active = cds.filter(cd => getEndAt(cd, buffs) > startTime);
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
     if (active.length >= maxCharges) {
       alert(t('cd没转好'));
       return;
     }
-    if (isChanneling(now)) {
+    if (isChanneling(startTime)) {
       alert(t('引导中不能施放其他技能'));
       return;
     }
@@ -369,8 +406,8 @@ export default function App() {
       {
         id,
         group,
-        start: now,
-        end: duration > 0 ? now + duration : undefined,
+        start: startTime,
+        end: duration > 0 ? startTime + duration : undefined,
         label,
         ability: key,
         ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(2)}s` } : {}),
@@ -380,32 +417,32 @@ export default function App() {
     ]);
     const extraBuffs: Buff[] = [];
     if (key === 'AA') {
-      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: now, end: now + 6, label: t('AA青龙'), src: id, group: 8 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: startTime, end: startTime + 6, label: t('AA青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: now + castDur, end: now + castDur + 8, label: t('SW青龙'), src: id, group: 8 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: startTime + castDur, end: startTime + castDur + 8, label: t('SW青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
-      const start = now + castDur;
+      const start = startTime + castDur;
       // convert AA buff if active
       setBuffs(bs => bs.map(b =>
         b.key === 'AA_BD' && b.start <= start && start < b.end
           ? { ...b, end: start }
           : b
       ));
-      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 8 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'CC_BD', start, end: start + 6, label: t('CC青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'BL') {
-      extraBuffs.push({ id: nextBuffId, key: 'BL', start: now, end: now + 40, label: 'Bloodlust', group: 5, src: id, multiplier: 1.3 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'BL', start: startTime, end: startTime + 40, label: 'Bloodlust', group: 6, src: id, multiplier: 1.3 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SEF') {
-      extraBuffs.push({ id: nextBuffId, key: 'SEF', start: now, end: now + 15, label: 'SEF', group: 3, src: id } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SEF', start: startTime, end: startTime + 15, label: 'SEF', group: 4, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'RSK' || key === 'RSK_HL') {
-      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: now, end: now + 12, label: 'Acclamation', group: 4, src: id } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Acclamation', start: startTime, end: startTime + 12, label: 'Acclamation', group: 5, src: id } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'Xuen') {
-      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: now, end: now + 20, label: 'Xuen', group: 2, src: id, multiplier: 1.15 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'Xuen', start: startTime, end: startTime + 20, label: 'Xuen', group: 3, src: id, multiplier: 1.15 } as any);
       setNextBuffId(nextBuffId - 1);
     }
 
@@ -429,13 +466,13 @@ export default function App() {
       extension = 0.25 * originalCost;
       setBuffs(bs =>
         bs.map(b =>
-          b.key === 'SEF' && b.end > now ? { ...b, end: b.end + extension } : b
+          b.key === 'SEF' && b.end > startTime ? { ...b, end: b.end + extension } : b
         )
       );
     }
 
     console.log(
-      `[${now.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
+      `[${startTime.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
       (chiGain > 0 ? `, gained ${chiGain} Chi` : '') +
       (key === 'RSK' || key === 'RSK_HL' ? ', Acclamation triggered' : '') +
       (extension > 0 ? `, SEF extended by ${extension.toFixed(2)}s` : '') +
@@ -445,15 +482,20 @@ export default function App() {
 
     const baseCd = ability.cooldown ?? 0;
     const hasteMult = (ability as any).affectedByHaste
-      ? hasteAt(now, [...buffs, ...blessingBuffs], stats.haste)
+      ? hasteAt(startTime, [...buffs, ...blessingBuffs], stats.haste)
       : 1;
     const cdDur = baseCd / hasteMult;
     setCasts(cdObj => {
       const out = { ...cdObj } as Record<string, SkillCast[]>;
       if (key === 'SEF') {
-        out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= now);
+        out['RSK'] = (out['RSK'] || []).filter(cd => getEndAt(cd, buffs) <= startTime);
+        out['RSK_HL'] = (out['RSK_HL'] || []).filter(cd => getEndAt(cd, buffs) <= startTime);
+        console.log('SEF triggered cooldown reset on RSK and RSK_HL');
+        if (!out['RSK_HL']) {
+          console.warn('RSK_HL not found for cooldown reset triggered by SEF');
+        }
       }
-      const rec = { id: String(id), start: now, base: cdDur, haste: hasteMult };
+      const rec = { id: String(id), start: startTime, base: cdDur, haste: hasteMult };
       out[key] = [ ...(cdObj[key] || []), rec ];
       if (key === 'RSK_HL') {
         out['RSK'] = [ ...(out['RSK'] || []), rec ];
@@ -462,7 +504,7 @@ export default function App() {
       }
       return out;
     });
-    setTime(now + (castDur > 0 ? castDur : isGCD ? 1 : 0.001));
+    setTime(startTime + (castDur > 0 ? castDur : isGCD ? 1 : 0.001));
   };
 
   // vertical lines showing when a cooldown finishes
@@ -472,6 +514,10 @@ export default function App() {
         .map((c, i) => (c.end > time ? { id: `${k}-${i}`, time: c.end } : null))
         .filter(Boolean) as TLItem[]
     );
+  const phaseLines = bossData
+    ? bossData.phases.slice(1).map((p, i) => ({ id: `phase-${i}`, time: p.start }))
+    : [];
+  const allLines = [...cdLines, ...phaseLines];
 
   // helper to show remaining cooldown next to each ability button
   const cdLabel = (key: WWKey) => {
@@ -499,6 +545,9 @@ export default function App() {
         }))
       )
     : [];
+  const filteredCdBars = compactViewMode
+    ? cdBars.filter(b => b.group === 10 || b.group === 11)
+    : cdBars;
 
   const qlBuffs = buffs.filter(b => b.key.endsWith('_BD'));
   const acclamationBuffs = buffs.filter(b => b.key === 'Acclamation');
@@ -543,7 +592,7 @@ export default function App() {
       if (extra > 0) {
         res.push({
           id: 10000 + i,
-          group: 8,
+          group: 9,
           start: s,
           end: e,
           label: `+${extra.toFixed(2)}s/s`,
@@ -558,7 +607,7 @@ export default function App() {
     const segs = computeBlessingSegments(blessingBuffs);
     return segs.map((seg, i) => ({
       id: 15000 + i,
-      group: 7,
+      group: 8,
       start: seg.start,
       end: seg.end,
       label: `${seg.stacks}×`,
@@ -571,7 +620,7 @@ export default function App() {
     const segs = computeAcclamationSegments(acclamationBuffs);
     return segs.map((seg, i) => ({
       id: 15500 + i,
-      group: 4,
+      group: 5,
       start: seg.start,
       end: seg.end,
       label: `${seg.pct}%`,
@@ -617,7 +666,7 @@ export default function App() {
       const lbl = `${mult.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')}×`;
       res.push({
         id: 20000 + i,
-        group: 1,
+        group: 2,
         start: s,
         end: e,
         label: lbl,
@@ -627,6 +676,42 @@ export default function App() {
     }
     return res;
   })();
+
+  const bossItems: TLItem[] = React.useMemo(() => {
+    if (!bossData) return [];
+    const phases = [...bossData.phases].sort((a, b) => a.start - b.start);
+    return bossData.timeline.map((ev, i) => {
+      const phase = phases.filter(p => ev.start >= p.start).slice(-1)[0];
+      const title = phase ? `${ev.label} (${phase.label})` : ev.label;
+      return {
+        id: 30000 + i,
+        group: 7,
+        start: ev.start,
+        label: `<div class="timeline-event-icon"><img src="${ev.icon}" alt="${ev.label}" /></div>`,
+        className: 'boss-event',
+        title,
+      } as TLItem;
+    });
+  }, [bossData]);
+
+  const phaseItems: TLItem[] = React.useMemo(() => {
+    if (!bossData) return [];
+    return bossData.phases.map((p, i) => ({
+      id: 31000 + i,
+      group: 1,
+      start: p.start,
+      label: p.label,
+      className: 'phase-marker',
+    }));
+  }, [bossData]);
+
+  const visibleAbilityItems: TLItem[] = compactViewMode
+    ? items
+        .filter(i => i.group === 10 || i.group === 11)
+        .map(it => ({ ...it, end: undefined, type: 'box' }))
+    : items;
+
+  const visibleCdBars = filteredCdBars;
 
   useEffect(() => {
     const { items: newItems, buffs: newBuffs, casts: newCasts, chi: newChi } =
@@ -668,6 +753,17 @@ export default function App() {
         { casts, buffs },
         String(id),
       );
+    }
+    while (isChanneling(finalStart, id)) {
+      const conflicts = items.filter(
+        it => it.id !== id && it.end !== undefined && finalStart < it.end && finalStart >= it.start,
+      );
+      if (!conflicts.length) break;
+      finalStart = Math.max(...conflicts.map(it => it.end!));
+    }
+    if (finalStart !== snapStart) {
+      setAutoAdjustMsg(t('释放时间已自动调整至可用时间'));
+      setTimeout(() => setAutoAdjustMsg(''), 2000);
     }
     const newEnd = end ?? (target && target.end ? finalStart + prevDur : undefined);
     const notReady = abilityKey ? isOnCD(abilityKey, finalStart, id) : false;
@@ -757,6 +853,15 @@ export default function App() {
       <aside className="sidebar p-4 space-y-4">
       <h1 className="text-xl font-bold">{t('踏风排轴器')}</h1>
       <h1 className="text-xl">{t('Boss时间轴选项')}</h1>
+      <div className="space-y-1">
+        <input
+          className="text-black w-full"
+          placeholder="/path/to/boss.json"
+          value={bossUrl}
+          onChange={e => setBossUrl(e.target.value)}
+        />
+        <button onClick={() => loadBoss(bossUrl)} className="px-2 py-1 border rounded">Load</button>
+      </div>
       <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         className="px-2 py-1 border rounded">
         {t('切换')} {theme === 'dark' ? t('浅色') : t('深色')}
@@ -885,17 +990,27 @@ export default function App() {
       })()}
       </aside>
       <main className="timeline-container">
+        {autoAdjustMsg && (
+          <div className="auto-adjust-toast">{autoAdjustMsg}</div>
+        )}
         <Timeline
-          items={[...hasteItems, ...items, ...buffItems, ...cdBars]}
+          items={[...phaseItems, ...hasteItems, ...visibleAbilityItems, ...buffItems, ...visibleCdBars, ...bossItems]}
           start={viewStart}
           end={viewStart + duration}
           cursor={time}
-          cds={cdLines}
+          cds={allLines}
           showCD={showCD}
           onCursorChange={setTime}
           onRangeChange={(s, e) => {
             setViewStart(s);
             setDuration(e - s);
+            if (e - s > 60 && !compactViewMode) {
+              setCompactViewMode(true);
+              setAutoAdjustMsg(t('已切换为简化视图模式，仅显示主技能。'));
+              setTimeout(() => setAutoAdjustMsg(''), 2000);
+            } else if (e - s <= 60 && compactViewMode) {
+              setCompactViewMode(false);
+            }
           }}
           onItemMove={moveItem}
           onItemContext={contextItem}

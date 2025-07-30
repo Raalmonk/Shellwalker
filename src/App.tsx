@@ -94,13 +94,18 @@ function recomputeTimeline(
     const isGCD = ability.triggersGCD ?? true;
     const duration = dur > 0 ? dur : isGCD ? 1 : 0;
     const idx = items.findIndex(x => x.id === it.id);
-    if (idx >= 0)
+    if (idx >= 0) {
+      const cls = items[idx].className || '';
+      const baseCls = cls.split(' ').filter(Boolean);
+      if (!baseCls.includes(key)) baseCls.push(key);
       items[idx] = {
         ...items[idx],
         end: duration > 0 ? it.start + duration : undefined,
         type: duration > 0 ? 'guide' : undefined,
         ...(ability.cast ? { title: duration > 0 ? `Cast Duration: ${duration.toFixed(2)}s` : undefined } : {}),
+        className: baseCls.join(' '),
       };
+    }
 
     const recs = casts[key] || [];
     const maxCharges = key === 'SEF' ? ability.charges ?? 2 : 1;
@@ -410,6 +415,7 @@ export default function App() {
         end: duration > 0 ? startTime + duration : undefined,
         label,
         ability: key,
+        className: key,
         ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(2)}s` } : {}),
         pendingDelete: false,
         type: itemType,
@@ -705,11 +711,58 @@ export default function App() {
     }));
   }, [bossData]);
 
-  const visibleAbilityItems: TLItem[] = compactViewMode
-    ? items
-        .filter(i => i.group === 10 || i.group === 11)
-        .map(it => ({ ...it, end: undefined, type: 'box' }))
-    : items;
+  const visibleAbilityItems: TLItem[] = React.useMemo(() => {
+    const pseudoDur = 1;
+    if (!compactViewMode) {
+      return items.map(it =>
+        it.ability === 'SEF'
+          ? { ...it, end: it.start + pseudoDur, type: 'guide' }
+          : it,
+      );
+    }
+    const abilityItems = items
+      .filter(i => i.group === 10 || i.group === 11)
+      .sort((a, b) => a.start - b.start);
+    const res: TLItem[] = [];
+    for (let i = 0; i < abilityItems.length; i++) {
+      const cur = abilityItems[i];
+      const next = abilityItems[i + 1];
+      if (next && next.start - cur.start <= 5) {
+        if (cur.ability === 'Xuen' && next.ability === 'SEF') {
+          const icon = ABILITY_ICON_MAP['Xuen_SEF'];
+          res.push({
+            ...cur,
+            label: `<div class="timeline-event-icon"><img src="${icon.src}" alt="Xuen+SEF" /></div>`,
+            className: `${cur.className ?? ''} Xuen_SEF`.trim(),
+          });
+          i++;
+          continue;
+        }
+        if (cur.ability === 'AA' && next.ability === 'SW') {
+          const icon = ABILITY_ICON_MAP['AA_SW'];
+          res.push({
+            ...cur,
+            label: `<div class="timeline-event-icon"><img src="${icon.src}" alt="AA+SW" /></div>`,
+            className: `${cur.className ?? ''} AA_SW`.trim(),
+          });
+          i++;
+          continue;
+        }
+        if (cur.ability === 'SW' && next.ability === 'AA') {
+          const icon = ABILITY_ICON_MAP['SW_AA'];
+          res.push({
+            ...cur,
+            label: `<div class="timeline-event-icon"><img src="${icon.src}" alt="SW+AA" /></div>`,
+            className: `${cur.className ?? ''} SW_AA`.trim(),
+          });
+          i++;
+          continue;
+        }
+      }
+      res.push(cur);
+    }
+    return res.map(it => ({ ...it, end: it.start + pseudoDur, type: 'guide' }));
+  }, [items, compactViewMode]);
 
   const visibleCdBars = filteredCdBars;
 
@@ -1000,6 +1053,7 @@ export default function App() {
           cursor={time}
           cds={allLines}
           showCD={showCD}
+          compact={compactViewMode}
           onCursorChange={setTime}
           onRangeChange={(s, e) => {
             setViewStart(s);

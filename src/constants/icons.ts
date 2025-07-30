@@ -13,6 +13,9 @@ import SCK from '../assets/abilityIcons/ability_monk_cranekick_new.jpg';
 import SCK_HL from '../assets/abilityIcons/ability_monk_cranekick_new_HL.jpg';
 import BLK_HL from '../assets/abilityIcons/ability_monk_roundhousekick_HL.jpg';
 import TP from '../Pics/TP.jpg';
+import Xuen_SEF from '../assets/abilityIcons/Xuen_SEF.jpg';
+import AA_SW from '../assets/abilityIcons/AA_SW.jpg';
+import SW_AA from '../assets/abilityIcons/SW_AA.jpg';
 
 export const ABILITY_ICON_MAP: Record<string, {src: string; abbr: string}> = {
   WU:  {src: WU,  abbr: 'WU'},
@@ -30,4 +33,7 @@ export const ABILITY_ICON_MAP: Record<string, {src: string; abbr: string}> = {
   SCK: {src: SCK, abbr: 'SCK'},
   SCK_HL: {src: SCK_HL, abbr: 'SCKH'},
   BLK_HL: {src: BLK_HL, abbr: 'BLK'},
+  Xuen_SEF: {src: Xuen_SEF, abbr: 'X+S'},
+  AA_SW: {src: AA_SW, abbr: 'AA+SW'},
+  SW_AA: {src: SW_AA, abbr: 'SW+AA'},
 };

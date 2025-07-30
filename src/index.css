@@ -173,3 +173,14 @@ body.light {
 .vis-item.phase-marker .vis-item-content {
   font-weight: bold;
 }
+
+/* minimum width for key abilities */
+.vis-item.Xuen,
+.vis-item.SEF,
+.vis-item.AA,
+.vis-item.SW,
+.vis-item.Xuen_SEF,
+.vis-item.AA_SW,
+.vis-item.SW_AA {
+  min-width: 64px;
+}

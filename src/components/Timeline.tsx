@@ -50,6 +50,7 @@ interface Props {
   cursor: number;
   cds: CDLine[];
   showCD: boolean;
+  compact?: boolean;
   // notify parent when the cursor (blue line) moves
   onCursorChange?: (t: number) => void;
   // window range changed (zoom/pan)
@@ -69,6 +70,7 @@ export const Timeline = ({
   cursor,
   cds,
   showCD,
+  compact,
   onCursorChange,
   onRangeChange,
   onItemMove,
@@ -134,7 +136,7 @@ export const Timeline = ({
           moveRef.current?.(
             Number(item.id),
             startMs / 1000,
-            endSec,
+            compact ? undefined : endSec,
           );
           callback(item);
         },

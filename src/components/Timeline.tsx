@@ -141,13 +141,8 @@ export const Timeline = ({
           callback(item);
         },
         format: {
-          minorLabels: (date: any) => {
-            const sec = Math.floor(date.valueOf() / 1000);
-            const m = String(Math.floor(sec / 60)).padStart(2, "0");
-            const s = String(sec % 60).padStart(2, "0");
-            return `${m}:${s}`;
-          },
-          majorLabels: () => "",
+          minorLabels: (date: any) => (date.valueOf() / 1000).toFixed(1) + 's',
+          majorLabels: () => '',
         },
       },
     );
@@ -223,6 +218,7 @@ export const Timeline = ({
     const tl = timelineRef.current;
     if (!cursorAdded.current) {
       tl.addCustomTime(new Date(cursor * 1000), "cursor");
+      tl.setCustomTimeTitle('', 'cursor');
       cursorAdded.current = true;
     } else {
       tl.setCustomTime(new Date(cursor * 1000), "cursor");
@@ -240,6 +236,7 @@ export const Timeline = ({
         const id = `cd-${c.id}-${Math.random()}`;
         cdIds.current.push(id);
         tl.addCustomTime(new Date(c.time * 1000), id);
+        tl.setCustomTimeTitle('', id);
       });
     }
   }, [cds, showCD]);

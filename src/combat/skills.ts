@@ -16,6 +16,9 @@ export class Skill {
     const base = this.opts.baseCd;
     const cd = this.opts.hasted ? base / (cdSpd * haste) : base / cdSpd;
     let cast = this.opts.cast ?? 0;
+    if (this.opts.hasted) {
+      cast /= haste;
+    }
     if (this.opts.name === 'FoF') {
       cast *= fofModAt(manager, time);
     }
@@ -35,7 +38,7 @@ export class Skill {
 
 export const AA = new Skill({ name: 'AA', baseCd: 30 });
 export const SW = new Skill({ name: 'SW', baseCd: 30, cast: 0.4 });
-export const CC = new Skill({ name: 'CC', baseCd: 90, cast: 4 });
+export const CC = new Skill({ name: 'CC', baseCd: 90, cast: 4, hasted: true });
 export const FoF = new Skill({ name: 'FoF', baseCd: 24, cast: 4, hasted: true });
 export const RSK = new Skill({ name: 'RSK', baseCd: 10, hasted: true });
 export const WU = new Skill({ name: 'WU', baseCd: 25, hasted: true });

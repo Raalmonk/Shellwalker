@@ -3,7 +3,7 @@ export type DragonType = typeof DRAGON_TYPES[number];
 
 export const BUFF_DURATION: Record<DragonType | 'Blessing', number> = {
   AA: 6,
-  SW: 8,
+  SW: 4,
   CC: 6,
   Blessing: 4,
 };
@@ -21,4 +21,4 @@ export const FOF_SPEED = {
   SW_WITH_OTHERS: 0.25,
 };
 
-export const BLESSING_HASTE = 1.15;
+export const BLESSING_HASTE = 1.1;

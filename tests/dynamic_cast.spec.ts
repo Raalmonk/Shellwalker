@@ -11,7 +11,7 @@ describe('calcDynamicEndTime', () => {
   });
 
   it('dragon speed applies', () => {
-    const sw = { key: 'SW_BD', start: 0, end: 8 };
+    const sw = { key: 'SW_BD', start: 0, end: 4 };
     const end = calcDynamicEndTime(0, 4, [sw], [], 0, ['AA_BD','SW_BD','CC_BD']);
     expect(end).toBeCloseTo(2, 3);
   });

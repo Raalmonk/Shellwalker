@@ -30,7 +30,7 @@ describe('azure dragon', () => {
     assert.equal(mgr.activeDragons(6).length, 1);
     const b = mgr.blessing(6);
     assert.ok(b);
-    assert.equal(hasteMult(mgr,6), 1.15);
+    assert.equal(hasteMult(mgr,6), 1.1);
     mgr.advance(12);
     assert.ok(b.end >= 10);
   });

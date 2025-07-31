@@ -74,5 +74,6 @@ export function selectTotalHasteAt(
   rating: number,
   t: number,
 ) {
-  return hasteAt(t, buffs, rating);
+  const gear = 1 + ratingToHaste(rating);
+  return gear * selectBloodlustHaste(buffs, t) * selectBlessingHaste(buffs, t);
 }

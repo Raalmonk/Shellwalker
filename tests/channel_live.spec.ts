@@ -42,6 +42,14 @@ it('CC channel reacts to gear haste change', () => {
   expect(selectRemCC(s)).toBeLessThan(before);
 });
 
+it('CC channel = 1.5s/total haste', () => {
+  setGearHastePercent(s, 0.20); // gear 1.2×
+  cast(s, 'BL'); // +30%
+  cast(s, 'CC');
+  const rem = selectRemCC(s);
+  expect(rem).toBeCloseTo(1500 / (1.2 * 1.3), 0);
+});
+
 it('SCK channel = 1.5s/haste', () => {
   setGearHastePercent(s, 0.20); // 1.2×
   cast(s, 'SCK');

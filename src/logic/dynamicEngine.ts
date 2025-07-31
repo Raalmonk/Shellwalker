@@ -1,5 +1,5 @@
 import { abilityById } from '../constants/abilities';
-import { selectTotalHasteAt as hasteAt, ratingToHaste, HasteBuff } from '../lib/haste';
+import { hasteAt, ratingToHaste, HasteBuff } from '../lib/haste';
 import { elapsedCdMs } from '../utils/cooldownIntegrate';
 import { sweepRate } from '../utils/dragonSweep';
 
@@ -80,7 +80,7 @@ export function dragonsOverlap(state: RootState, t: number) {
 
 export function selectTotalHasteAt(state: RootState, t: number) {
   const rating = gearRatingAt(state, t);
-  return hasteAt(state.buffs, rating, t);
+  return hasteAt(t, state.buffs, rating);
 }
 
 export function getEffectiveTickRate(
@@ -113,6 +113,12 @@ export function cast(state: RootState, abilityId: string) {
     state.buffs.push({ key: 'SW', start: state.now, end: state.now + 4000 });
   } else if (abilityId === 'CC') {
     state.buffs.push({ key: 'CC', start: state.now, end: state.now + 6000 });
+    const h = selectTotalHasteAt(state, state.now);
+    console.log(
+      `[DEBUG][CC] at t=${state.now}ms, totalHaste=${h.toFixed(2)}, expectedDuration=${(
+        (ability.baseChannelMs ?? 0) / h
+      ).toFixed(2)}ms`,
+    );
   } else if (abilityId === 'BL') {
     state.buffs.push({ key: 'BL', start: state.now, end: state.now + 40000, multiplier: 1.3 });
   }

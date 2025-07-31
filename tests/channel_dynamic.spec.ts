@@ -48,3 +48,12 @@ it('CC channel reacts to Bloodlust added after cast', () => {
   cast(s, 'BL');
   expect(selectRemCC(s)).toBeLessThan(before);
 });
+
+
+it('CC channel scales with extra haste buff', () => {
+  setGearHastePercent(s, 0);
+  s.buffs.push({ key: 'Xuen', start: 0, end: 5000, multiplier: 1.33 } as any);
+  cast(s, 'CC');
+  const rem = selectRemCC(s);
+  expect(rem).toBeCloseTo(1150, 0);
+});

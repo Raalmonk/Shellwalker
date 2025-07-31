@@ -1,1 +1,1 @@
-export const fmt = (v: number) => v.toFixed(2);
+export const fmt = (v: number) => v.toFixed(1);

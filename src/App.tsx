@@ -48,7 +48,7 @@ function computeBlessingBuffs(dragons: CalcBuff[]): CalcBuff[] {
       end,
       label: t('祝福'),
       group: 8,
-      multiplier: 1.15,
+      multiplier: 1.1,
       source,
     });
   };
@@ -103,7 +103,7 @@ function recomputeTimeline(
         ...items[idx],
         end: duration > 0 ? it.start + duration : undefined,
         type: duration > 0 ? 'guide' : undefined,
-        ...(ability.cast ? { title: duration > 0 ? `Cast Duration: ${duration.toFixed(2)}s` : undefined } : {}),
+        ...(ability.cast ? { title: duration > 0 ? `Cast Duration: ${duration.toFixed(1)}s` : undefined } : {}),
         className: baseCls.join(' '),
       };
     }
@@ -129,7 +129,7 @@ function recomputeTimeline(
       ? 2
       : key === 'SEF'
         ? 2
-        : key === 'BLK_HL' || key === 'RSK_HL'
+        : key === 'BOK_HL' || key === 'RSK_HL'
           ? 1
           : 0;
     if (actualCost > 0) chi = Math.max(0, chi - actualCost);
@@ -140,7 +140,7 @@ function recomputeTimeline(
     if (key === 'AA') {
       buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 9, src: it.id });
     } else if (key === 'SW') {
-      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 9, src: it.id });
+      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 4, label: t('SW青龙'), group: 9, src: it.id });
     } else if (key === 'CC') {
       const start = it.start + dur;
       buffs = buffs.map(b => (b.key === 'AA_BD' && b.start <= start && start < b.end ? { ...b, end: start } : b));
@@ -167,23 +167,35 @@ function recomputeTimeline(
         console.warn('RSK_HL not found for cooldown reset triggered by SEF');
       }
     }
-    if (key === 'BOK' || key === 'BLK_HL') {
+    if (key === 'BOK' || key === 'BOK_HL') {
       const reduction = cdSpeedAt(it.start, buffs);
-      const applyReduce = (list: SkillCast[] = []) =>
+      let fofReduced = 0;
+      let rskReduced = 0;
+      const applyReduce = (
+        list: SkillCast[] = [],
+        track: (diff: number) => void,
+      ) =>
         list
           .map(cd => {
             const end = getEndAt(cd, buffs);
             if (end <= it.start) return cd;
             const newEnd = Math.max(it.start, end - reduction);
+            track(end - newEnd);
             if (newEnd <= cd.start) return null;
             const newBase = cdProgress(cd.start, newEnd, buffs, cdSpeedAt);
             return { ...cd, base: newBase };
           })
           .filter(Boolean) as SkillCast[];
-      casts['FoF'] = applyReduce(casts['FoF']);
-      const rsk = applyReduce(casts['RSK']);
+      casts['FoF'] = applyReduce(casts['FoF'], d => (fofReduced += d));
+      const rsk = applyReduce(casts['RSK'], d => (rskReduced += d));
       casts['RSK'] = rsk;
       casts['RSK_HL'] = rsk;
+      if (idx >= 0) {
+        items[idx] = {
+          ...items[idx],
+          title: `FoF -${fofReduced.toFixed(1)}s, RSK -${rskReduced.toFixed(1)}s`,
+        };
+      }
     }
     const rec = { id: String(it.id), start: it.start, base: cdDur, haste: hasteMult };
     casts[key] = [...(casts[key] || []), rec];
@@ -194,7 +206,7 @@ function recomputeTimeline(
     }
   }
   const total = Math.max(0, ...items.map(i => (i.end ?? i.start)));
-  console.log('Recomputed full timeline from 0 to ' + total.toFixed(2) + 's');
+  console.log('Recomputed full timeline from 0 to ' + total.toFixed(1) + 's');
   return { items, buffs, casts, chi };
 }
 
@@ -239,9 +251,7 @@ export default function App() {
   }, [dispatch]);
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
-    const s = Math.floor(sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    return `${sec.toFixed(1)}s`;
   };
 
 
@@ -353,7 +363,7 @@ export default function App() {
     BOK: 13,
     SCK: 13,
     SCK_HL: 13,
-    BLK_HL: 13,
+    BOK_HL: 13,
     BL: 6,
   };
 
@@ -387,7 +397,7 @@ export default function App() {
     let chiGain = 0;
     if (key === 'TP') chiGain = 2;
     else if (key === 'SEF') chiGain = 2;
-    else if (key === 'BLK_HL' || key === 'RSK_HL') chiGain = 1;
+    else if (key === 'BOK_HL' || key === 'RSK_HL') chiGain = 1;
 
     if (actualCost > 0 && chi < actualCost) {
       alert('Chi不足，无法施放技能');
@@ -435,7 +445,7 @@ export default function App() {
         label,
         ability: key,
         className: key,
-        ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(2)}s` } : {}),
+        ...(castDur > 0 ? { title: `Cast Duration: ${castDur.toFixed(1)}s` } : {}),
         pendingDelete: false,
         type: itemType,
       },
@@ -445,7 +455,7 @@ export default function App() {
       extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: startTime, end: startTime + 6, label: t('AA青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: startTime + castDur, end: startTime + castDur + 8, label: t('SW青龙'), src: id, group: 9 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: startTime + castDur, end: startTime + castDur + 4, label: t('SW青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = startTime + castDur;
@@ -482,7 +492,7 @@ export default function App() {
     if (actualCost > 0) {
       dispatch(spendChi(actualCost));
     }
-    if (key === 'BLK_HL') {
+    if (key === 'BOK_HL') {
       dispatch(gainChi(1));
     } else if (chiGain > 0) {
       dispatch(gainChi(chiGain));
@@ -500,7 +510,7 @@ export default function App() {
       `[${startTime.toFixed(3)}s] Cast ${key} → spent ${actualCost} Chi (original ${originalCost})` +
       (chiGain > 0 ? `, gained ${chiGain} Chi` : '') +
       (key === 'RSK' || key === 'RSK_HL' ? ', Acclamation triggered' : '') +
-      (extension > 0 ? `, SEF extended by ${extension.toFixed(2)}s` : '') +
+      (extension > 0 ? `, SEF extended by ${extension.toFixed(1)}s` : '') +
       `, Chi now: ${Math.max(0, Math.min(6, chi - actualCost + chiGain))}`
     );
 
@@ -520,23 +530,41 @@ export default function App() {
           console.warn('RSK_HL not found for cooldown reset triggered by SEF');
         }
       }
-      if (key === 'BOK' || key === 'BLK_HL') {
+      if (key === 'BOK' || key === 'BOK_HL') {
         const reduction = cdSpeedAt(startTime, buffs);
-        const applyReduce = (list: SkillCast[] = []) =>
+        let fofReduced = 0;
+        let rskReduced = 0;
+        const applyReduce = (
+          list: SkillCast[] = [],
+          track: (diff: number) => void,
+        ) =>
           list
             .map(cd => {
               const end = getEndAt(cd, buffs);
               if (end <= startTime) return cd;
               const newEnd = Math.max(startTime, end - reduction);
+              track(end - newEnd);
               if (newEnd <= cd.start) return null;
               const newBase = cdProgress(cd.start, newEnd, buffs, cdSpeedAt);
               return { ...cd, base: newBase };
             })
             .filter(Boolean) as SkillCast[];
-        out['FoF'] = applyReduce(out['FoF']);
-        const rsk = applyReduce(out['RSK']);
+        out['FoF'] = applyReduce(out['FoF'], d => (fofReduced += d));
+        const rsk = applyReduce(out['RSK'], d => (rskReduced += d));
         out['RSK'] = rsk;
         out['RSK_HL'] = rsk;
+        setItems(items =>
+          items.map(it =>
+            it.id === id
+              ? {
+                  ...it,
+                  title: `FoF -${fofReduced.toFixed(1)}s, RSK -${rskReduced.toFixed(
+                    1,
+                  )}s`,
+                }
+              : it,
+          ),
+        );
       }
       const rec = { id: String(id), start: startTime, base: cdDur, haste: hasteMult };
       out[key] = [ ...(cdObj[key] || []), rec ];
@@ -608,7 +636,7 @@ export default function App() {
         end,
         label: t('祝福'),
         group: 7,
-        multiplier: 1.15,
+        multiplier: 1.1,
         source,
       } as Buff);
     };
@@ -638,7 +666,7 @@ export default function App() {
           group: 9,
           start: s,
           end: e,
-          label: `+${extra.toFixed(2)}s/s`,
+          label: `+${extra.toFixed(1)}s/s`,
           className: 'buff',
         });
       }

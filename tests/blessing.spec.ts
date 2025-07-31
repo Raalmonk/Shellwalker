@@ -24,9 +24,9 @@ describe('Blessing stacks', () => {
     mgr.advance(10);
     const stacksAt10 = mgr.activeBlessings(10);
     expect(stacksAt10.length).toBe(2);
-    const sw = stacksAt10.find(b => b.source === 'SW');
-    expect(sw && Math.abs(sw.end - 17.4) < 0.001).toBe(true);
-    expect(hasteMult(mgr, 10)).toBeCloseTo(Math.pow(1.15, 2), 2);
+    const sources = stacksAt10.map(b => b.source);
+    expect(sources.every(s => s === 'POST')).toBe(true);
+    expect(hasteMult(mgr, 10)).toBeCloseTo(Math.pow(1.1, 2), 2);
   });
 
   it('segments show stack labels', () => {

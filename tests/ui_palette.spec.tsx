@@ -27,7 +27,7 @@ describe('AbilityPalette', () => {
     root.unmount();
   });
 
-  it('shows BLK_HL, SCK, SCK_HL in minorFiller row', async () => {
+  it('shows BOK_HL, SCK, SCK_HL in minorFiller row', async () => {
     const abilities = wwData(0);
     const div = document.createElement('div');
     document.body.appendChild(div);
@@ -39,7 +39,7 @@ describe('AbilityPalette', () => {
     expect(minorRow).toBeTruthy();
     const imgs = minorRow!.querySelectorAll('img');
     const alts = Array.from(imgs).map(i => i.getAttribute('alt'));
-    expect(alts).toContain('BLK_HL');
+    expect(alts).toContain('BOK_HL');
     expect(alts).toContain('SCK');
     expect(alts).toContain('SCK_HL');
     root.unmount();

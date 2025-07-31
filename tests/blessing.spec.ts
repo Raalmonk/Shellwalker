@@ -23,10 +23,9 @@ describe('Blessing stacks', () => {
     // advance to CC expiration (10s)
     mgr.advance(10);
     const stacksAt10 = mgr.activeBlessings(10);
-    expect(stacksAt10.length).toBe(2);
-    const sources = stacksAt10.map(b => b.source);
-    expect(sources.every(s => s === 'POST')).toBe(true);
-    expect(hasteMult(mgr, 10)).toBeCloseTo(Math.pow(1.1, 2), 2);
+    expect(stacksAt10.length).toBe(1);
+    expect(stacksAt10[0].source).toBe('POST');
+    expect(hasteMult(mgr, 10)).toBeCloseTo(1.1, 2);
   });
 
   it('segments show stack labels', () => {

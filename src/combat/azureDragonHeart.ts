@@ -41,7 +41,7 @@ export class BuffManager {
   add(buff: Buff) {
     if (buff instanceof Blessing) {
       const active = this.activeBlessings(buff.start);
-      if (active.length >= 3) return buff;
+      if (active.some(b => b.source === buff.source)) return buff;
       this.buffs.push(buff);
       return buff;
     }
@@ -52,12 +52,27 @@ export class BuffManager {
           if (
             b instanceof AzureDragonHeart &&
             b.kind === 'AA' &&
-            b.isActive(buff.start)
+            (b.isActive(buff.start) || b.end === buff.start)
           ) {
             b.duration = buff.start - b.start;
             b.blessing.duration = b.duration;
             b.check(buff.start);
             b.blessing.check(buff.start);
+            buff.blessing.source = 'AA';
+          }
+        }
+      } else if (buff.kind === 'AA') {
+        for (const b of this.buffs) {
+          if (
+            b instanceof AzureDragonHeart &&
+            b.kind === 'CC' &&
+            (b.isActive(buff.start) || b.end === buff.start)
+          ) {
+            b.duration = buff.start - b.start;
+            b.blessing.duration = b.duration;
+            b.check(buff.start);
+            b.blessing.check(buff.start);
+            buff.blessing.source = 'CC';
           }
         }
       }
@@ -94,17 +109,12 @@ export class BuffManager {
   }
 
   private addPostBlessing(time: number, ended: DragonType) {
-    const active = this.activeBlessings(time);
-    const other = active.find(
-      b => b.source !== ended && b.source !== 'POST',
-    );
-    if (other) {
-      other.extend(BUFF_DURATION.Blessing);
-    }
-    const post = active.find(b => b.source === 'POST');
+    const stillActive = this.activeDragons(time).some(d => d.kind !== ended);
+    if (stillActive) return;
+    const post = this.activeBlessings(time).find(b => b.source === 'POST');
     if (post) {
       post.extend(BUFF_DURATION.Blessing);
-    } else if (active.length < 3) {
+    } else {
       this.buffs.push(new Blessing('POST', time));
     }
   }

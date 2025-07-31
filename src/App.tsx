@@ -41,6 +41,8 @@ function computeBlessingBuffs(dragons: CalcBuff[]): CalcBuff[] {
   let nid = -1000;
   const res: CalcBuff[] = [];
   const add = (start: number, end: number, source: string) => {
+    const active = res.filter(b => b.start <= start && start < b.end);
+    if (active.some(b => b.source === source)) return;
     res.push({
       id: nid--,
       key: 'BLG',
@@ -53,14 +55,29 @@ function computeBlessingBuffs(dragons: CalcBuff[]): CalcBuff[] {
     });
   };
   for (const d of sorted) {
-    add(d.start, d.end, d.key);
+    let source = d.key;
+    if (d.key === 'CC_BD') {
+      const aa = sorted.find(b =>
+        b.key === 'AA_BD' && b.start < d.start && b.end >= d.start,
+      );
+      if (aa) source = 'AA_BD';
+    } else if (d.key === 'AA_BD') {
+      const cc = sorted.find(b =>
+        b.key === 'CC_BD' && b.start < d.start && b.end >= d.start,
+      );
+      if (cc) source = 'CC_BD';
+    }
+    add(d.start, d.end, source);
     const tEnd = d.end;
-    const active = res.filter(b => b.start <= tEnd && tEnd < b.end);
-    const other = active.find(b => b.source !== d.key && b.source !== 'POST');
-    if (other) other.end += 4;
-    const post = active.find(b => b.source === 'POST');
-    if (post) post.end += 4;
-    else if (active.length < 3) add(tEnd, tEnd + 4, 'POST');
+    const still = sorted.some(
+      b => b !== d && b.start <= tEnd && tEnd < b.end,
+    );
+    if (!still) {
+      const active = res.filter(b => b.start <= tEnd && tEnd < b.end);
+      const post = active.find(b => b.source === 'POST');
+      if (post) post.end += 4;
+      else add(tEnd, tEnd + 4, 'POST');
+    }
   }
   return res;
 }
@@ -629,6 +646,8 @@ export default function App() {
     let nid = -1000;
     const res: Buff[] = [];
     const add = (start: number, end: number, source: string) => {
+      const active = res.filter(b => b.start <= start && start < b.end);
+      if (active.some(b => b.source === source)) return;
       res.push({
         id: nid--,
         key: 'BLG',
@@ -641,14 +660,27 @@ export default function App() {
       } as Buff);
     };
     for (const d of dragons) {
-      add(d.start, d.end, d.key);
+      let source = d.key;
+      if (d.key === 'CC_BD') {
+        const aa = dragons.find(b =>
+          b.key === 'AA_BD' && b.start < d.start && b.end >= d.start,
+        );
+        if (aa) source = 'AA_BD';
+      } else if (d.key === 'AA_BD') {
+        const cc = dragons.find(b =>
+          b.key === 'CC_BD' && b.start < d.start && b.end >= d.start,
+        );
+        if (cc) source = 'CC_BD';
+      }
+      add(d.start, d.end, source);
       const t = d.end;
-      const active = res.filter(b => b.start <= t && t < b.end);
-      const other = active.find(b => b.source !== d.key && b.source !== 'POST');
-      if (other) other.end += 4;
-      const post = active.find(b => b.source === 'POST');
-      if (post) post.end += 4;
-      else if (active.length < 3) add(t, t + 4, 'POST');
+      const still = dragons.some(b => b !== d && b.start <= t && t < b.end);
+      if (!still) {
+        const active = res.filter(b => b.start <= t && t < b.end);
+        const post = active.find(b => b.source === 'POST');
+        if (post) post.end += 4;
+        else add(t, t + 4, 'POST');
+      }
     }
     return res;
   }, [qlBuffs]);
@@ -676,15 +708,31 @@ export default function App() {
 
   const blessingItems: TLItem[] = (() => {
     const segs = computeBlessingSegments(blessingBuffs);
-    return segs.map((seg, i) => ({
-      id: 15000 + i,
-      group: 8,
-      start: seg.start,
-      end: seg.end,
-      label: `${seg.stacks}×`,
-      className: 'blessing',
-      stacks: seg.stacks,
-    }));
+    const sourceMap: Record<string, string> = {
+      AA_BD: t('AA-activated Xuen'),
+      CC_BD: t('CC-activated Xuen'),
+      SW_BD: t('SW trigger'),
+      POST: t('Tail Buff'),
+    };
+    return segs.map((seg, i) => {
+      const mid = (seg.start + seg.end) / 2;
+      const active = blessingBuffs.filter(
+        b => b.start <= mid && mid < b.end,
+      );
+      const title = active
+        .map((b, idx) => `Stack ${idx + 1}: ${sourceMap[b.source!] || 'Blessing'}`)
+        .join('\n');
+      return {
+        id: 15000 + i,
+        group: 8,
+        start: seg.start,
+        end: seg.end,
+        label: `${seg.stacks}×`,
+        className: 'blessing',
+        stacks: seg.stacks,
+        title,
+      } as TLItem;
+    });
   })();
 
   const acclamationItems: TLItem[] = (() => {

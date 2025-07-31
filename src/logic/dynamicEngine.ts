@@ -1,5 +1,5 @@
 import { abilityById } from '../constants/abilities';
-import { selectTotalHasteAt as hasteAt, ratingToHaste, HasteBuff } from '../lib/haste';
+import { hasteAt, ratingToHaste, HasteBuff } from '../lib/haste';
 import { elapsedCdMs } from '../utils/cooldownIntegrate';
 import { sweepRate } from '../utils/dragonSweep';
 
@@ -80,7 +80,7 @@ export function dragonsOverlap(state: RootState, t: number) {
 
 export function selectTotalHasteAt(state: RootState, t: number) {
   const rating = gearRatingAt(state, t);
-  return hasteAt(state.buffs, rating, t);
+  return hasteAt(t, state.buffs, rating);
 }
 
 export function getEffectiveTickRate(

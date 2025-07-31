@@ -48,7 +48,7 @@ function computeBlessingBuffs(dragons: CalcBuff[]): CalcBuff[] {
       end,
       label: t('祝福'),
       group: 8,
-      multiplier: 1.15,
+      multiplier: 1.1,
       source,
     });
   };
@@ -140,7 +140,7 @@ function recomputeTimeline(
     if (key === 'AA') {
       buffs.push({ id: --nid, key: 'AA_BD', start: it.start, end: it.start + 6, label: t('AA青龙'), group: 9, src: it.id });
     } else if (key === 'SW') {
-      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 8, label: t('SW青龙'), group: 9, src: it.id });
+      buffs.push({ id: --nid, key: 'SW_BD', start: it.start + dur, end: it.start + dur + 4, label: t('SW青龙'), group: 9, src: it.id });
     } else if (key === 'CC') {
       const start = it.start + dur;
       buffs = buffs.map(b => (b.key === 'AA_BD' && b.start <= start && start < b.end ? { ...b, end: start } : b));
@@ -455,7 +455,7 @@ export default function App() {
       extraBuffs.push({ id: nextBuffId, key: 'AA_BD', start: startTime, end: startTime + 6, label: t('AA青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'SW') {
-      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: startTime + castDur, end: startTime + castDur + 8, label: t('SW青龙'), src: id, group: 9 } as any);
+      extraBuffs.push({ id: nextBuffId, key: 'SW_BD', start: startTime + castDur, end: startTime + castDur + 4, label: t('SW青龙'), src: id, group: 9 } as any);
       setNextBuffId(nextBuffId - 1);
     } else if (key === 'CC') {
       const start = startTime + castDur;
@@ -636,7 +636,7 @@ export default function App() {
         end,
         label: t('祝福'),
         group: 7,
-        multiplier: 1.15,
+        multiplier: 1.1,
         source,
       } as Buff);
     };

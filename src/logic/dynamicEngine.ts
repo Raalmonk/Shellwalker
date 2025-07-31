@@ -110,7 +110,7 @@ export function cast(state: RootState, abilityId: string) {
   if (abilityId === 'AA') {
     state.buffs.push({ key: 'AA', start: state.now, end: state.now + 6000 });
   } else if (abilityId === 'SW') {
-    state.buffs.push({ key: 'SW', start: state.now, end: state.now + 8000 });
+    state.buffs.push({ key: 'SW', start: state.now, end: state.now + 4000 });
   } else if (abilityId === 'CC') {
     state.buffs.push({ key: 'CC', start: state.now, end: state.now + 6000 });
   } else if (abilityId === 'BL') {

@@ -15,14 +15,6 @@ export function selectRemainingChannel(state: RootState, id: string) {
   if (cast == null) return 0;
   const ability = abilityById(id);
   const base = ability.baseChannelMs ?? 0;
-  if (id === 'CC' && ability.channelDynamic) {
-    const h = selectTotalHasteAt(state, cast);
-    console.log(
-      `[DEBUG][CC] at t=${cast}ms, totalHaste=${h.toFixed(2)}, expectedDuration=${(
-        base / h
-      ).toFixed(2)}ms`,
-    );
-  }
   const dt = 50;
   let t = cast;
   let done = 0;

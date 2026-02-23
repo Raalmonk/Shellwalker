@@ -1,4 +1,0 @@
-# Shellwalker
-
-## Mechanics
-

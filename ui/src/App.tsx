@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { WW_SKILLS } from './shell_walker/SkillDB';
+import { simulateSequence } from './shell_walker/Engine';
+import { computeLeftPanelViews } from './shell_walker/PanelEngine';
+import type { StateSnapshot, EngineEvent } from './shell_walker/EngineTypes';
 
 const DEFAULT_PROFILE = `monk="WW_MVP"
 level=80
@@ -21,6 +24,12 @@ export default function App() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // 🌟 Local Simulation State
+  const [localSimState, setLocalSimState] = useState<{ finalState: StateSnapshot; timeline: EngineEvent[] }>({
+    finalState: { t: 0, gcd_until: 0, channel_until: 0, cooldowns: {} },
+    timeline: []
+  });
+
   const handleInitProfile = async () => {
     setIsSimulating(true); setErrorMsg(null);
     try {
@@ -37,7 +46,26 @@ export default function App() {
     finally { setIsSimulating(false); }
   };
 
-  const visibleSkills = useMemo(() => WW_SKILLS.filter(s => !s.requiredTalent || activeTalents.includes(s.requiredTalent)), [activeTalents]);
+  // 🌟 Real-time Local Simulation
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    // Run local simulation immediately
+    // Assuming 0 haste for local preview until we have better data
+    const { finalState, events } = simulateSequence(sequence, 0);
+    setLocalSimState({ finalState, timeline: events });
+
+  }, [sequence, isInitialized]);
+
+  // 🌟 Compute Left Panel Views based on Local Simulation State
+  const skillViews = useMemo(() => {
+      const activeTalentsMap = activeTalents.reduce((acc, t) => ({...acc, [t]: true}), {} as Record<string, boolean>);
+      return computeLeftPanelViews({
+        activeTalents: activeTalentsMap,
+        currentTime: localSimState.finalState.t,
+        cooldownReadyTimes: localSimState.finalState.cooldowns
+      });
+  }, [activeTalents, localSimState.finalState]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -72,7 +100,10 @@ export default function App() {
     if (spellId) addSpell(spellId);
   };
 
-  const absoluteTimeline = simResult?.timeline || [];
+  // Use simResult timeline if available (for resources), otherwise fallback to local timeline
+  const timelineToRender = simResult?.timeline || localSimState.timeline;
+
+  const absoluteTimeline = timelineToRender;
   const totalTime = absoluteTimeline.length > 0 ? absoluteTimeline[absoluteTimeline.length - 1].startT + absoluteTimeline[absoluteTimeline.length - 1].duration : 5;
   
   // 🌟 核心：横向拉伸像素！让发呆块和技能看得清清楚楚！
@@ -105,14 +136,41 @@ export default function App() {
         </div>
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="grid grid-cols-2 gap-4">
-            {visibleSkills.map(skill => (
-              <div key={skill.id} draggable onDragStart={(e) => e.dataTransfer.setData('spellId', skill.id)} onClick={() => addSpell(skill.id)} className="flex flex-col items-center gap-3 p-4 rounded-lg border bg-gray-800 border-gray-700 hover:border-emerald-500 cursor-grab hover:scale-105 transition-transform shadow-lg">
+            {skillViews.map(skill => (
+              <div
+                key={skill.id}
+                draggable={skill.isReady}
+                onDragStart={(e) => {
+                  if (skill.isReady) {
+                    e.dataTransfer.setData('spellId', skill.id)
+                  } else {
+                    e.preventDefault();
+                  }
+                }}
+                onClick={() => skill.isReady && addSpell(skill.id)}
+                className={`flex flex-col items-center gap-3 p-4 rounded-lg border transition-all shadow-lg
+                  ${skill.isReady
+                    ? 'bg-gray-800 border-gray-700 hover:border-emerald-500 cursor-grab hover:scale-105'
+                    : 'bg-gray-900 border-gray-800 opacity-50 cursor-not-allowed grayscale'
+                  }
+                `}
+              >
                 <div className="relative w-14 h-14">
                   <img src={`https://wow.zamimg.com/images/wow/icons/large/${skill.icon}.jpg`} className="absolute inset-0 w-full h-full rounded-md shadow-md border border-gray-900 object-cover z-10" onError={(e) => e.currentTarget.style.display='none'} />
-                  {/* 🛡️ 容错防爆盾：如果 Wowhead 图标碎了，自动显示文字块 */}
+                  {/* Lock Icon Overlay */}
+                  {!skill.isReady && (
+                    <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center rounded-md">
+                        <span className="text-xl">🔒</span>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gray-700 rounded-md flex items-center justify-center text-xs font-black text-gray-300 border border-gray-600 z-0">{skill.name.substring(0,2)}</div>
                 </div>
-                <span className="text-sm font-bold pointer-events-none text-gray-300">{skill.name}</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-bold pointer-events-none text-gray-300">{skill.name}</span>
+                  {!skill.isReady && skill.lockReason && (
+                     <span className="text-[10px] text-red-400 font-bold text-center mt-1 leading-tight">{skill.lockReason}</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -175,13 +233,12 @@ export default function App() {
           <h3 className="text-emerald-500 text-base font-bold uppercase tracking-widest mb-10"><span>⚖️</span> SimC 绝对裁决时间轴 (挂载物理级 真气 / 能量)</h3>
           
           <div className="relative w-full h-48" style={{ minWidth: Math.max(1000, totalTime * TIME_SCALE + 300) }}>
-            {simResult && (
-              <>
-                {Array.from({ length: Math.ceil(totalTime) + 2 }).map((_, i) => (
+             {/* Always render grid */}
+             {Array.from({ length: Math.ceil(totalTime) + 2 }).map((_, i) => (
                   <div key={`grid-${i}`} className="absolute top-0 bottom-0 border-l border-gray-800/60 pointer-events-none" style={{ left: i * TIME_SCALE }}><span className="text-sm text-gray-500 ml-2 font-mono absolute -top-8">{i}s</span></div>
-                ))}
-                
-                {absoluteTimeline.map((ev: any, i: number) => {
+              ))}
+
+              {absoluteTimeline.map((ev: any, i: number) => {
                   const leftPx = ev.startT * TIME_SCALE, widthPx = Math.max(ev.duration * TIME_SCALE, 4); 
                   
                   if (ev.type === 'WAIT') return <div key={`wait-${i}`} className="absolute top-8 h-28 rounded-xl opacity-40 flex items-center justify-center pointer-events-none border-2 border-gray-600 shadow-inner z-0" style={{ left: leftPx, width: widthPx, backgroundImage: 'repeating-linear-gradient(45deg, #374151 0, #374151 10px, #1f2937 10px, #1f2937 20px)' }}>{widthPx > 60 && <span className="text-sm text-gray-200 font-bold bg-black/60 px-3 py-1 rounded-md shadow">等待 {ev.duration.toFixed(2)}s</span>}</div>;
@@ -197,7 +254,7 @@ export default function App() {
                       {/* 🛡️ 容错防爆盾 */}
                       <div className="relative w-14 h-14 mb-1.5">
                         <img src={`https://wow.zamimg.com/images/wow/icons/large/${uiSkill?.icon}.jpg`} className="absolute inset-0 w-full h-full rounded shadow-md border border-gray-900 object-cover z-10" onError={(e) => e.currentTarget.style.display='none'} />
-                        <div className="absolute inset-0 bg-gray-700 rounded flex items-center justify-center text-[10px] font-black text-white border border-gray-600 z-0 leading-tight text-center px-1 break-words">{uiSkill ? uiSkill.name : ev.spellId.replace(/_/g, ' ')}</div>
+                        <div className="absolute inset-0 bg-gray-700 rounded flex items-center justify-center text-[10px] font-black text-white border border-gray-600 z-0 leading-tight text-center px-1 break-words">{uiSkill ? uiSkill.name : ev.spellId?.replace(/_/g, ' ')}</div>
                       </div>
                       
                       <span className="text-xs text-white font-mono bg-black/60 px-2 py-0.5 rounded">{ev.startT.toFixed(2)}s</span>
@@ -212,8 +269,6 @@ export default function App() {
                     </div>
                   );
                 })}
-              </>
-            )}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ export const WW_SKILLS: SkillBlueprint[] = [
   { id: 'TP', name: '猛虎掌', icon: 'ability_monk_tigerpalm', gcdType: 'locked_1s', baseCooldown: 0, baseCastTime: 0 },
   { id: 'BoK', name: '幻灭踢', icon: 'ability_monk_roundhousekick', canCallBuff: true, gcdType: 'locked_1s', baseCooldown: 0, baseCastTime: 0 },
   { id: 'RSK', name: '旭日踢', icon: 'ability_monk_risingsunkick', canCallBuff: true, gcdType: 'locked_1s', baseCooldown: 10, baseCastTime: 0 },
+  { id: 'RWK', name: '狂风踢', icon: 'ability_monk_rushingwindkick', gcdType: 'locked_1s', baseCooldown: 0, baseCastTime: 0, replacesId: 'RSK' },
   { id: 'FoF', name: '怒雷破', icon: 'ability_monk_fistsoffury', gcdType: 'haste_scaled', baseCooldown: 24, baseCastTime: 4 },
   { id: 'SCK', name: '神鹤引项踢', icon: 'ability_monk_spinningcranekick', canCallBuff: true, gcdType: 'locked_1s', baseCooldown: 0, baseCastTime: 0 },
   { id: 'SotWL', name: '风领主之击', icon: 'ability_monk_strikeofthewindlord', requiredTalent: 'strike_of_the_windlord', gcdType: 'locked_1s', baseCooldown: 30, baseCastTime: 0 },

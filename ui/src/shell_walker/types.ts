@@ -10,6 +10,7 @@ export interface SkillBlueprint {
   baseCastTime?: number;
   baseCooldown?: number;
   cdHasteScaled?: boolean;
+  replacesId?: string;
 }
 
 export interface SkillView extends SkillBlueprint {
@@ -17,4 +18,5 @@ export interface SkillView extends SkillBlueprint {
   isReady: boolean;
   remainsCd: number;
   lockReason?: string;
+  isHighlighted?: boolean;
 }

@@ -45,8 +45,8 @@ export function simulateSequence(sequence: {id: string, spellId: string}[], hast
       state.gcd_until = state.t + realGcd;
       state.channel_until = state.t + blockDuration;
     }
-    // 只有非引导技能才立刻进入冷却
-    if (baseCooldown > 0 && baseCastTime === 0) {
+    // 只有非引导技能才立刻进入冷却 (修正：所有技能都在施法开始时进 CD，包括引导类 FoF)
+    if (baseCooldown > 0) {
       const actualCd = cdHasteScaled ? (baseCooldown / currentHasteMult) : baseCooldown;
       state.cooldowns[spell.id] = state.t + actualCd; 
     }

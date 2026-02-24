@@ -1,0 +1,47 @@
+[
+    {
+        "id": 100780,
+        "name": "Tiger Palm",
+        "cast_time": 0.0,
+        "gcd": 1.5,
+        "cooldown": 0.0,
+        "resource": "50 Energy (3) (id=5167)",
+        "is_channeled": false
+    },
+    {
+        "id": 100784,
+        "name": "Blackout Kick",
+        "cast_time": 0.0,
+        "gcd": 1.5,
+        "cooldown": 3.0,
+        "resource": "3 Chi (12) (id=6139) w/ Windwalker Monk (id=137025)",
+        "is_channeled": false
+    },
+    {
+        "id": 107428,
+        "name": "Rising Sun Kick",
+        "cast_time": 0.0,
+        "gcd": 1.5,
+        "cooldown": 10.0,
+        "resource": "2.5% Base Mana (0) (id=10832) w/ Mistweaver Monk (id=137024)",
+        "is_channeled": false
+    },
+    {
+        "id": 113656,
+        "name": "Fists of Fury",
+        "cast_time": 0.0,
+        "gcd": 1.0,
+        "cooldown": 24.0,
+        "resource": "3 Chi (12) (id=6141)",
+        "is_channeled": false
+    },
+    {
+        "id": 101546,
+        "name": "Spinning Crane Kick",
+        "cast_time": 0.0,
+        "gcd": 1.5,
+        "cooldown": 0.0,
+        "resource": "40 Energy (3) (id=10834) w/ Brewmaster Monk (id=137023)",
+        "is_channeled": false
+    }
+]

@@ -1,0 +1,176 @@
+{
+    "spells": {
+        "2649": {
+            "id": 2649,
+            "name": "Growl (desc=Basic Ability)",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 8.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "61684": {
+            "id": 61684,
+            "name": "Dash (desc=Basic Ability)",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 20.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "100780": {
+            "id": 100780,
+            "name": "Tiger Palm",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 0.0,
+            "resource": "50 Energy (3) (id=5167)",
+            "is_channeled": false
+        },
+        "100784": {
+            "id": 100784,
+            "name": "Blackout Kick",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 3.0,
+            "resource": "3 Chi (12) (id=6139) w/ Windwalker Monk (id=137025)",
+            "is_channeled": false
+        },
+        "101545": {
+            "id": 101545,
+            "name": "Flying Serpent Kick",
+            "gcd": 1.0,
+            "cast_time": 0.0,
+            "cooldown": 30.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "101546": {
+            "id": 101546,
+            "name": "Spinning Crane Kick",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 0.0,
+            "resource": "2 Chi (12) (id=6140) w/ Windwalker Monk (id=137025)",
+            "is_channeled": false
+        },
+        "109132": {
+            "id": 109132,
+            "name": "Roll",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 0.8,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "115450": {
+            "id": 115450,
+            "name": "Detox",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 0.0,
+            "resource": "1.3% Base Mana (0) (id=5734)",
+            "is_channeled": false
+        },
+        "115546": {
+            "id": 115546,
+            "name": "Provoke",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 8.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "116670": {
+            "id": 116670,
+            "name": "Vivify",
+            "gcd": 1.5,
+            "cast_time": 1.5,
+            "cooldown": 0.0,
+            "resource": "3% Base Mana (0) (id=10386) w/ Mistweaver Monk (id=137024)",
+            "is_channeled": false
+        },
+        "117952": {
+            "id": 117952,
+            "name": "Crackling Jade Lightning",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 0.0,
+            "resource": "20 Energy (3) and 20 Energy (3) per tick (id=11676) w/ Windwalker Monk (id=137025)",
+            "is_channeled": false
+        },
+        "119381": {
+            "id": 119381,
+            "name": "Leg Sweep",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 60.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "122470": {
+            "id": 122470,
+            "name": "Touch of Karma",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 90.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "125883": {
+            "id": 125883,
+            "name": "Zen Flight",
+            "gcd": 1.0,
+            "cast_time": 0.0,
+            "cooldown": 0.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "212051": {
+            "id": 212051,
+            "name": "Reawaken",
+            "gcd": 1.5,
+            "cast_time": 10.0,
+            "cooldown": 0.0,
+            "resource": "0.8% Base Mana (0) (id=11139)",
+            "is_channeled": false
+        },
+        "322101": {
+            "id": 322101,
+            "name": "Expel Harm",
+            "gcd": 1.0,
+            "cast_time": 0.0,
+            "cooldown": 15.0,
+            "resource": "15 Energy (3) (id=192624) w/ Windwalker Monk (id=137025)",
+            "is_channeled": false
+        },
+        "322109": {
+            "id": 322109,
+            "name": "Touch of Death",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 180.0,
+            "resource": "None",
+            "is_channeled": false
+        },
+        "322729": {
+            "id": 322729,
+            "name": "Spinning Crane Kick",
+            "gcd": 1.5,
+            "cast_time": 0.0,
+            "cooldown": 0.0,
+            "resource": "25 Energy (3) (id=192645) w/ Brewmaster Monk (id=137023)",
+            "is_channeled": false
+        },
+        "1229376": {
+            "id": 1229376,
+            "name": "Single-Button Assistant",
+            "gcd": 1.5,
+            "cast_time": 2.0,
+            "cooldown": 0.0,
+            "resource": "None",
+            "is_channeled": false
+        }
+    },
+    "talents": {}
+}

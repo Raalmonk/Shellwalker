@@ -1,5 +1,5 @@
 import { WW_SKILLS } from './SkillDB';
-import { SkillView } from './types';
+import type { SkillView } from './types';
 
 // 这是你从全局 Store (Zustand/Pinia) 传进来的当前状态
 export interface CurrentState {

@@ -1,0 +1,54 @@
+# 目录
+generic/
+iconengines/
+imageformats/
+locale/
+networkinformation/
+platforms/
+position/
+profiles/
+qml/
+qmltooling/
+resources/
+styles/
+tls/
+translations/
+
+# 文档与开源协议
+CONTRIBUTING.md
+COPYING
+LICENSE
+LICENSE.BOOST
+LICENSE.BSD
+LICENSE.BSD2
+LICENSE.LGPL
+LICENSE.MIT
+LICENSE.UNLICENSE
+README.md
+
+# 动态链接库 (DLLs)
+d3dcompiler_47.dll
+opengl32sw.dll
+Qt6Core.dll
+Qt6Gui.dll
+Qt6Network.dll
+Qt6OpenGL.dll
+Qt6Positioning.dll
+Qt6PrintSupport.dll
+Qt6Qml.dll
+Qt6QmlModels.dll
+Qt6Quick.dll
+Qt6QuickWidgets.dll
+Qt6Svg.dll
+Qt6WebChannel.dll
+Qt6WebEngineCore.dll
+Qt6WebEngineWidgets.dll
+Qt6Widgets.dll
+
+# 可执行文件与其他资源
+Error.html
+QtWebEngineProcess.exe
+simc.exe
+SimulationCraft.exe
+Welcome.html
+Welcome.png

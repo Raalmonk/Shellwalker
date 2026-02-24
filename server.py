@@ -21,9 +21,8 @@ class ActionItem(BaseModel):
 class SimulateRequest(BaseModel):
     profileText: str
     sequence: List[ActionItem]
-    autoPilot: bool = False  # 🌟 完美支持残局自动推演
+    autoPilot: bool = False
 
-# 🛡️ 终极防弹解析器：无论 SimC 格式怎么乱变，绝不报 str object 错误！
 def safe_get(obj, *keys):
     for k in keys:
         if isinstance(obj, dict): obj = obj.get(k)
@@ -43,7 +42,6 @@ def simulate_timeline(req: SimulateRequest):
         simc_actions = [ACTION_MAP[i.spellId] for i in req.sequence if i.spellId in ACTION_MAP]
         seq_string = ":".join(simc_actions)
 
-        # 🧠 外科手术式注入：保留原生 APL 大脑！精准插入你的排轴意图！
         out_lines = []
         injected = False
         seq_action = f"actions+=/strict_sequence,name=mvp_seq:{seq_string}" if seq_string else "actions+=/wait,sec=1"
@@ -52,11 +50,10 @@ def simulate_timeline(req: SimulateRequest):
         for line in req.profileText.split('\n'):
             if not injected and (line.strip().startswith("actions+=/call_action_list") or line.strip().startswith("actions+=/run_action_list")):
                 out_lines.append(seq_action)
-                if not req.autoPilot: out_lines.append(halt_action) # 若不开自动驾驶，打完意图就锁死时间
+                if not req.autoPilot: out_lines.append(halt_action)
                 injected = True
             out_lines.append(line)
 
-        # 兜底注入
         if not injected:
             out_lines = []
             for line in req.profileText.split('\n'):
@@ -81,79 +78,82 @@ json2="{json_path}"
             subprocess.run([simc_exec, simc_path], check=True, capture_output=True, text=True, encoding='utf-8', errors='replace')
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr if e.stderr else e.stdout
-            raise Exception(f"SimC 执行崩溃:\n{error_msg}")
+            raise Exception(f"SimC 解析崩溃:\n{error_msg}")
 
         with open(json_path, "r", encoding="utf-8") as f: 
             json_data = json.load(f)
 
         player = safe_get(json_data, "sim", "players", 0) or {}
 
-        # 🛡️ 安全提取天赋 (💥 解决 'str' object 报错的第一防线)
         active_talents = []
         talents_data = safe_get(player, "talents")
         if isinstance(talents_data, list):
             for t in talents_data:
-                if isinstance(t, dict) and isinstance(t.get("name"), str):
-                    active_talents.append(t["name"].lower().replace(" ", "_"))
-                elif isinstance(t, str):
-                    active_talents.append(t.lower().replace(" ", "_"))
-        elif isinstance(talents_data, dict):
-            for k in talents_data.keys():
-                if isinstance(k, str):
-                    active_talents.append(k.lower().replace(" ", "_"))
+                if isinstance(t, dict) and isinstance(t.get("name"), str): active_talents.append(t["name"].lower().replace(" ", "_"))
+                elif isinstance(t, str): active_talents.append(t.lower().replace(" ", "_"))
 
         profile_lower = req.profileText.lower()
         if "strike_of_the_windlord" in profile_lower: active_talents.append("strike_of_the_windlord")
         if "whirling_dragon_punch" in profile_lower: active_talents.append("whirling_dragon_punch")
 
-        # 🛡️ 安全提取动作序列 (💥 解决 'str' object 报错的核心地带)
         action_sequence = safe_get(player, "collected_data", "action_sequence") or []
         timeline, last_t = [], 0.0
 
+        # 🌟 核心破译：记录你排版了哪些技能，随时准备替换底层假名
+        ui_sequence = [i.spellId for i in req.sequence]
+        seq_idx = 0
+
         if isinstance(action_sequence, list):
             for act in action_sequence:
-                # 🛡️ 致命防御盾牌：如果 act 是一段文字（如 "combat_end"），直接跳过不调用 get()！
-                if not isinstance(act, dict): 
-                    continue
-                    
+                if not isinstance(act, dict): continue
                 simc_name = act.get("name")
                 t = act.get("time")
-                if not isinstance(simc_name, str) or not isinstance(t, (int, float)): 
+                if not isinstance(simc_name, str) or not isinstance(t, (int, float)): continue
+
+                simc_name_lower = simc_name.lower()
+                
+                # 剔除无用的平砍垃圾，保持时间轴清爽
+                if "melee" in simc_name_lower or "auto_attack" in simc_name_lower:
                     continue
 
-                # 若是未知动作(如 AI 自动驾驶打出的药水)，直接展示原名！
-                ui_id = REVERSE_MAP.get(simc_name, simc_name) 
+                is_ai = False
+                # 🌟 智能破译：遇到 strict_sequence 的障眼法，直接拿你排入的真名替换！
+                if "strict_sequence" in simc_name_lower or "sequence" in simc_name_lower or "mvp_seq" in simc_name_lower:
+                    if seq_idx < len(ui_sequence):
+                        ui_id = ui_sequence[seq_idx]
+                        seq_idx += 1
+                    else:
+                        ui_id = "unknown_seq"
+                else:
+                    ui_id = REVERSE_MAP.get(simc_name, simc_name)
+                    is_ai = True
+
+                # 🌟 抽取资源：抓取每一个动作出手瞬间的真实气/能量！
+                chi = safe_get(act, "resources", "chi")
+                if chi is None: chi = act.get("chi", 0)
+                energy = safe_get(act, "resources", "energy")
+                if energy is None: energy = act.get("energy", 0)
 
                 gap = t - last_t
                 if gap > 0.05: timeline.append({"type": "WAIT", "startT": last_t, "duration": gap})
-                timeline.append({"type": "CAST", "spellId": ui_id, "startT": t, "duration": 1.0})
+                timeline.append({
+                    "type": "CAST", "spellId": ui_id, "startT": t, "duration": 1.0,
+                    "chi": chi, "energy": energy, "isAI": is_ai
+                })
                 last_t = t
 
         for i in range(len(timeline)):
             if timeline[i]["type"] == "CAST":
                 timeline[i]["duration"] = (timeline[i+1]["startT"] - timeline[i]["startT"]) if i + 1 < len(timeline) else 1.5
 
-        # 🛡️ 安全提取伤害明细
-        total_dmg = safe_get(player, "collected_data", "dmg", "mean")
-        if not isinstance(total_dmg, (int, float)): total_dmg = 0.0
-        
-        spell_breakdown = {}
-        stats = safe_get(player, "stats")
-        if isinstance(stats, list):
-            for stat in stats:
-                if not isinstance(stat, dict): continue
-                name = stat.get("name")
-                dmg = stat.get("portion_amount", 0)
-                count = stat.get("execute_count", 0)
-                if isinstance(name, str) and (dmg > 0 or count > 0):
-                    ui_id = REVERSE_MAP.get(name, name)
-                    spell_breakdown[ui_id] = {"damage": dmg, "count": count}
+        # 🌟 PRD 核心要求：用 DPS (秒伤) 替换毫无意义的总伤！
+        dps = safe_get(player, "collected_data", "dps", "mean")
+        if not isinstance(dps, (int, float)): dps = 0.0
 
-        return {"totalDamage": total_dmg, "timeline": timeline, "activeTalents": active_talents, "spellBreakdown": spell_breakdown}
+        return {"dps": dps, "timeline": timeline, "activeTalents": active_talents}
 
     except Exception as e:
-        tb = traceback.format_exc()
-        print(f"Server Error Log:\n{tb}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if os.path.exists(simc_path): os.remove(simc_path)

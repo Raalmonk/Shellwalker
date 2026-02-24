@@ -1,4 +1,3 @@
-import React from 'react';
 import type { EngineEvent } from './EngineTypes';
 
 export const TimelineTrack = ({ events }: { events: EngineEvent[] }) => {

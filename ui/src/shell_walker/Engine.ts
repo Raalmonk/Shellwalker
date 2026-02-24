@@ -14,7 +14,12 @@ export function simulateSequence(sequence: {id: string, spellId: string}[], hast
 
     // 1. 发呆留白判定 (前端只看CD，不再越权拦你真气！)
     let readyTime = state.t;
-    if (spell.gcdType !== 'off_gcd') {
+    const gcdType = spell.gcdType ?? 'locked_1s';
+    const baseCastTime = spell.baseCastTime ?? 0;
+    const baseCooldown = spell.baseCooldown ?? 0;
+    const cdHasteScaled = spell.cdHasteScaled ?? false;
+
+    if (gcdType !== 'off_gcd') {
       readyTime = Math.max(readyTime, state.gcd_until, state.channel_until);
     }
     const cdReadyAt = state.cooldowns[spell.id] || 0;
@@ -28,21 +33,21 @@ export function simulateSequence(sequence: {id: string, spellId: string}[], hast
 
     // 2. 算耗时
     let realGcd = 0;
-    if (spell.gcdType === 'locked_1s') realGcd = 1.0;
-    else if (spell.gcdType === 'fixed_0.4s') realGcd = 0.4;
-    else if (spell.gcdType === 'haste_scaled') realGcd = Math.max(0.75, 1.5 / currentHasteMult);
+    if (gcdType === 'locked_1s') realGcd = 1.0;
+    else if (gcdType === 'fixed_0.4s') realGcd = 0.4;
+    else if (gcdType === 'haste_scaled') realGcd = Math.max(0.75, 1.5 / currentHasteMult);
 
-    let realCast = spell.baseCastTime > 0 ? (spell.baseCastTime / currentHasteMult) : 0;
+    const realCast = baseCastTime > 0 ? (baseCastTime / currentHasteMult) : 0;
     const blockDuration = Math.max(realGcd, realCast); 
 
     // 3. 上锁
-    if (spell.gcdType !== 'off_gcd') {
+    if (gcdType !== 'off_gcd') {
       state.gcd_until = state.t + realGcd;
       state.channel_until = state.t + blockDuration;
     }
     // 只有非引导技能才立刻进入冷却
-    if (spell.baseCooldown > 0 && spell.baseCastTime === 0) {
-      let actualCd = spell.cdHasteScaled ? (spell.baseCooldown / currentHasteMult) : spell.baseCooldown;
+    if (baseCooldown > 0 && baseCastTime === 0) {
+      const actualCd = cdHasteScaled ? (baseCooldown / currentHasteMult) : baseCooldown;
       state.cooldowns[spell.id] = state.t + actualCd; 
     }
 

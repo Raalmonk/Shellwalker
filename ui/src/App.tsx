@@ -69,7 +69,7 @@ export default function App() {
   const absoluteTimeline = simResult?.timeline || [];
   const totalTime = absoluteTimeline.length > 0 ? absoluteTimeline[absoluteTimeline.length - 1].startT + 3.0 : 5;
   
-  // 🌟 缺气死锁报警器 (底层吞了你排的技能！)
+  // 🌟 缺气卡CD死锁报警器 (底层物理引擎吞了你排的错技能！)
   const isStalled = simResult && !isSimulating && simResult.droppedCount > 0;
 
   if (!isInitialized) {
@@ -77,8 +77,9 @@ export default function App() {
       <div className="flex flex-col items-center justify-center h-screen bg-[#0a0a0c] text-white p-8 font-sans">
         <div className="w-full max-w-4xl bg-gray-900 border border-gray-800 rounded-2xl p-10 shadow-2xl">
           <h1 className="text-3xl font-black text-emerald-500 mb-6 tracking-widest uppercase">配置初始化 (SimC 探针)</h1>
+          <p className="text-gray-400 text-sm mb-6">探针崩溃已修复！移花接木绝不删除原生变量，随时响应你的排版调度。</p>
           <textarea value={profileText} onChange={e => setProfileText(e.target.value)} className="w-full h-80 bg-black text-gray-300 text-lg p-6 rounded-lg border border-gray-700 font-mono focus:border-emerald-500 focus:outline-none mb-6 resize-none shadow-inner" />
-          {errorMsg && <div className="text-red-500 text-base mb-6 bg-red-900/20 p-4 rounded-lg font-bold border border-red-900/50">🚨 探针发射失败: {errorMsg}</div>}
+          {errorMsg && <div className="text-red-500 text-base mb-6 bg-red-900/20 p-4 rounded-lg font-bold border border-red-900/50 overflow-y-auto max-h-40 whitespace-pre-wrap">🚨 探针发射失败: {errorMsg}</div>}
           <button onClick={handleInitProfile} disabled={isSimulating} className="w-full py-5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xl font-bold disabled:opacity-50 transition-all flex justify-center items-center">
             {isSimulating ? <span className="animate-spin text-2xl">⚙️</span> : '✅ 确定并读取初始状态'}
           </button>
@@ -90,7 +91,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#0a0a0c] text-white font-sans select-none overflow-hidden text-base">
       
-      {/* --- 左侧纯净图鉴 --- */}
+      {/* --- 左侧大图图鉴 --- */}
       <div className="w-80 bg-gray-900 border-r border-gray-800 flex flex-col z-10 shrink-0 shadow-2xl">
         <div className="p-6 border-b border-gray-800 bg-black/40">
            <button onClick={() => setIsInitialized(false)} className="text-gray-400 hover:text-white text-sm underline mb-4">← 返回修改配置</button>
@@ -115,7 +116,7 @@ export default function App() {
 
       <div className="flex-1 flex flex-col overflow-hidden relative bg-[#0d0d12]">
         
-        {/* --- 顶部控制栏 --- */}
+        {/* --- 顶部控制栏 (全面放大) --- */}
         <div className="h-28 border-b border-gray-800 flex items-center px-10 bg-gray-900/40 justify-between sticky top-0 z-20 shrink-0 shadow-lg">
           <div className="flex items-center gap-8">
              <div onClick={() => setAutoPilot(!autoPilot)} className={`flex items-center gap-4 cursor-pointer p-3 rounded-lg border transition-all ${autoPilot ? 'bg-blue-900/40 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-gray-800 border-gray-700'}`}>
@@ -126,7 +127,7 @@ export default function App() {
                 </div>
              </div>
              
-             {/* 🌟 无极 Zoom 缩放拖杆 */}
+             {/* 🌟 核心：无极 Zoom 缩放拖杆！ */}
              <div className="flex flex-col ml-4 border-l border-gray-700 pl-8">
                <span className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">🔍 轨道缩放 (Zoom)</span>
                <input type="range" min="80" max="600" value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} className="w-48 accent-emerald-500 cursor-ew-resize" />
@@ -136,7 +137,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-6">
-             {/* 🌟 HTML 官方报告下载直通车！ */}
+             {/* 🌟 HTML 官方报告直通车！ */}
              {simResult?.htmlReportUrl && (
                <a href={simResult.htmlReportUrl} target="_blank" rel="noreferrer" className="px-6 py-4 bg-indigo-900/60 hover:bg-indigo-800 text-indigo-300 rounded-lg text-base font-bold border border-indigo-700 shadow-[0_0_15px_rgba(79,70,229,0.3)] flex items-center gap-2 transition-all">
                  📄 查阅原生 HTML 战报
@@ -156,7 +157,7 @@ export default function App() {
            {/* 🚨 防吞噬死锁红色风暴警告！ */}
            {isStalled && (
               <div className="bg-red-900/80 border-b-4 border-red-500 p-4 shadow-[0_0_30px_rgba(239,68,68,0.5)] flex justify-center items-center z-10">
-                 <span className="text-white text-lg font-bold flex items-center gap-3"><span className="text-3xl animate-bounce">🚨</span> 严重断轴警告！由于真气不足或冷却受限，你排入的后 {simResult.droppedCount} 个技能被物理引擎无情吞噬了！</span>
+                 <span className="text-white text-lg font-bold flex items-center gap-3"><span className="text-3xl animate-bounce">🚨</span> 严重断轴警告！由于真气不足或冷却卡死，你排入的后 {simResult.droppedCount} 个技能被物理引擎无情吞噬了！</span>
               </div>
            )}
 
@@ -167,7 +168,7 @@ export default function App() {
                 {sequence.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-gray-600 pointer-events-none text-2xl font-bold tracking-widest">排入技能，手停0.5s自动算...</span>}
                 {sequence.map((ev, i) => {
                   const uiSkill = WW_SKILLS.find(s => s.id === ev.spellId);
-                  // 🚨 没打出来的废动作染成灰红色打红叉
+                  // 🚨 没打出来的废动作染成灰红色并打出警告！
                   const isDropped = isStalled && i >= simResult.executedCount;
 
                   return (
@@ -213,14 +214,13 @@ export default function App() {
                    {absoluteTimeline.map((ev: any, i: number) => {
                      const leftPx = ev.startT * zoom;
                      
-                     // Wait 块仅作淡色暗纹，不带任何阻碍视觉的文字！天然漏出间隙。
+                     // 🌟 Wait 块仅作淡色暗纹，天然漏出间隙，彻底消灭遮挡视野的假字！
                      if (ev.type === 'WAIT') {
                        return <div key={`wait-${i}`} className="absolute top-8 h-36 rounded-xl opacity-30 flex items-center justify-center pointer-events-none border border-gray-700/50 shadow-inner z-0" style={{ left: leftPx, width: ev.duration * zoom, backgroundImage: 'repeating-linear-gradient(45deg, #374151 0, #374151 10px, transparent 10px, transparent 20px)' }}>
                          {(ev.duration * zoom) > 70 && <span className="text-[11px] text-gray-400 font-bold bg-black/60 px-2 py-0.5 rounded-md shadow">等待 {ev.duration.toFixed(2)}s</span>}
                        </div>;
                      }
 
-                     // 积木的宽度严格等于它的 duration (即 GCD 1.0s 或引导时间)
                      const widthPx = Math.max(ev.duration * zoom, 40); 
                      
                      const uiSkill = WW_SKILLS.find(s => s.id === ev.spellId);
@@ -242,7 +242,7 @@ export default function App() {
                          
                          <span className="text-sm text-white font-mono bg-black/80 px-2 py-0.5 rounded pointer-events-none shadow">{ev.startT.toFixed(2)}s</span>
                          
-                         {/* 🌟 直接悬挂底层的残余气/能量！！ */}
+                         {/* 🌟 PRD 灵魂机制：在积木正下方直接悬挂底层的残余气/能量！！ */}
                          {ev.energy !== undefined && ev.chi !== undefined && (
                             <div className="absolute -bottom-6 flex gap-3 bg-gray-900/95 px-3 py-1.5 rounded-lg shadow-xl border border-gray-700 z-20 pointer-events-none">
                                <span className="text-yellow-400 text-sm font-black leading-none drop-shadow">⚡{Math.round(ev.energy)}</span>
@@ -257,7 +257,7 @@ export default function App() {
              </div>
            </div>
 
-           {/* 🌟 3. 黑客风探针显微镜 */}
+           {/* 🌟 3. 黑客风探针显微镜！ */}
            {selectedEvent && (
              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900/95 border-2 border-emerald-500 p-8 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] z-50 w-[450px] backdrop-blur-md">
                <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
@@ -277,7 +277,7 @@ export default function App() {
                   <div className="flex justify-between pt-3"><span className="text-gray-500">执行主体:</span> <span className={`font-bold ${selectedEvent.isAI ? 'text-blue-400 bg-blue-900/30' : 'text-emerald-400 bg-emerald-900/30'} px-3 py-1 rounded`}>{selectedEvent.isAI ? '🤖 自动接管系统' : '👤 玩家排入指令'}</span></div>
                </div>
                <div className="mt-8 text-sm text-gray-500 leading-relaxed bg-black/40 p-4 rounded-lg border border-gray-800">
-                  <span className="text-emerald-500 font-bold">架构提示：</span> 该数据为底层核心运算后的绝对快照。触发概率已由 <code className="text-blue-300">deterministic=1</code> 强行抹杀。
+                  <span className="text-emerald-500 font-bold">架构提示：</span> 该数据为底层核心运算后的绝对快照。<code className="text-blue-300">deterministic=0</code> 已启动，触发效果由物理引擎 RNG 裁定。
                </div>
              </div>
            )}
